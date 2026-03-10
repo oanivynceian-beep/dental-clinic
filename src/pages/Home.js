@@ -6,23 +6,19 @@ import Header from '../components/Header';
 
 // --- Styled Components ---
 
-// 1. Main Layout Container
 const HeroSection = styled.section`
   position: relative;
   width: 100%;
-  height: 100vh; /* Full viewport height */
+  height: 100vh;
   min-height: 600px;
   display: flex;
   flex-direction: column;
   align-items: center;
-  
-  /* Background Image handling */
   background-image: url('https://images.unsplash.com/photo-1629909613654-28e377c37b09?q=80&w=2068&auto=format&fit=crop');
   background-size: cover;
   background-position: center;
   background-repeat: no-repeat;
   
-  /* Overlay to ensure text readability */
   &::before {
     content: '';
     position: absolute;
@@ -30,12 +26,11 @@ const HeroSection = styled.section`
     left: 0;
     width: 100%;
     height: 100%;
-    background: rgba(255, 255, 255, 0.15); /* Slight white tint overlay */
+    background: rgba(255, 255, 255, 0.15);
     z-index: 0;
   }
 `;
 
-// 2. Logo Section (needed by footer) - kept minimal here
 const Logo = styled.div`
   display: flex;
   align-items: center;
@@ -64,11 +59,11 @@ const ContentWrapper = styled(motion.div)`
   text-align: center;
   max-width: 800px;
   padding: 0 20px;
-  margin-top: -50px; /* Optical adjustment */
+  margin-top: -50px;
 `;
 
 const Headline = styled.h1`
-  font-size: clamp(2rem, 5vw, 3.5rem); /* Responsive font size */
+  font-size: clamp(2rem, 5vw, 3.5rem);
   color: #5d4037;
   font-weight: 800;
   margin-bottom: 10px;
@@ -85,7 +80,6 @@ const SubHeadline = styled.h2`
   text-shadow: 0 2px 10px rgba(255,255,255,0.5);
 `;
 
-// 7. CTA Button with Animation
 const CTAButton = styled.button`
   background-color: #5d4037;
   color: white;
@@ -100,28 +94,18 @@ const CTAButton = styled.button`
   animation: pulse 2s infinite;
 
   @keyframes pulse {
-    0% {
-      transform: scale(1);
-      box-shadow: 0 10px 25px rgba(93, 64, 55, 0.4);
-    }
-    50% {
-      transform: scale(1.05);
-      box-shadow: 0 15px 35px rgba(93, 64, 55, 0.5);
-    }
-    100% {
-      transform: scale(1);
-      box-shadow: 0 10px 25px rgba(93, 64, 55, 0.4);
-    }
+    0% { transform: scale(1); box-shadow: 0 10px 25px rgba(93, 64, 55, 0.4); }
+    50% { transform: scale(1.05); box-shadow: 0 15px 35px rgba(93, 64, 55, 0.5); }
+    100% { transform: scale(1); box-shadow: 0 10px 25px rgba(93, 64, 55, 0.4); }
   }
 
   &:hover {
     background-color: #4e342e;
-    animation: none; /* Stop pulsing on hover for better UX */
+    animation: none;
     transform: scale(1.1);
   }
 `;
 
-// 8. Services Banner
 const ServicesBanner = styled(motion.div)`
   width: 100%;
   height: 300px;
@@ -147,7 +131,6 @@ const BannerTitle = styled.h2`
   text-align: center;
 `;
 
-// 9. Services Section
 const ServicesSection = styled.section`
   padding: 5rem 5%;
   background-color: #fff;
@@ -165,23 +148,24 @@ const ServicesGrid = styled.div`
   }
 `;
 
+const ServiceImage = styled(motion.img)`
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: transform 0.6s cubic-bezier(0.33, 1, 0.68, 1);
+`;
+
 const ServiceCard = styled(motion.div)`
   position: relative;
   border-radius: 12px;
   overflow: hidden;
   aspect-ratio: 16 / 9;
   box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
-  transition: transform 0.3s ease;
+  cursor: pointer;
 
-  &:hover {
-    transform: translateY(-5px);
+  &:hover ${ServiceImage} {
+    transform: scale(1.1);
   }
-`;
-
-const ServiceImage = styled.img`
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
 `;
 
 const ServiceLabel = styled.div`
@@ -196,6 +180,7 @@ const ServiceLabel = styled.div`
   font-size: 1.125rem;
   letter-spacing: 0.5px;
   box-shadow: 5px 5px 0px rgba(255, 255, 255, 0.2);
+  z-index: 2;
 
   @media (max-width: 640px) {
     top: 1rem;
@@ -205,85 +190,92 @@ const ServiceLabel = styled.div`
   }
 `;
 
-// 10. Comments Section
-const CommentsSection = styled.section`
-  padding:5rem 5%;
-  background:#fff;
-  display:flex;
-  flex-direction:column;
-  align-items:center;
-  position:relative;
+const CommentsSection = styled(motion.section)`
+  padding: 5rem 5%;
+  background: #fff;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  position: relative;
+  overflow: hidden;
 `;
 
-const Watermark = styled.div`
-  position:absolute;
-  font-size:20rem;
-  font-weight:900;
-  opacity:.04;
-  pointer-events:none;
+const Watermark = styled(motion.div)`
+  position: absolute;
+  font-size: 20rem;
+  font-weight: 900;
+  opacity: .04;
+  pointer-events: none;
+  white-space: nowrap;
 `;
 
-const CommentsTitle = styled.h2`
-  font-size:2.5rem;
-  color:#4a3728;
-  margin-bottom:2rem;
-  text-align:center;
+const CommentsTitle = styled(motion.h2)`
+  font-size: 2.5rem;
+  color: #4a3728;
+  margin-bottom: 2rem;
+  text-align: center;
+  z-index: 1;
 `;
 
-const CommentsContainer = styled.div`
-  width:100%;
-  max-width:700px;
-  background:#e5e7e1;
-  border-radius:40px;
-  padding:3rem;
+const CommentsContainer = styled(motion.div)`
+  width: 100%;
+  max-width: 700px;
+  background: #e5e7e1;
+  border-radius: 40px;
+  padding: 3rem;
+  z-index: 1;
+  box-shadow: 0 20px 40px rgba(0,0,0,0.05);
 `;
 
 const CommentForm = styled.form`
-  display:flex;
-  flex-direction:column;
-  gap:1.5rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
 `;
 
 const FormRow = styled.div`
-  display:grid;
-  grid-template-columns:1fr 1fr;
-  gap:1rem;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1rem;
 
   @media(max-width:640px){
-    grid-template-columns:1fr;
+    grid-template-columns: 1fr;
   }
 `;
 
 const Input = styled.input`
-  padding:1rem;
-  border:none;
-  border-radius:10px;
-  outline:none;
+  padding: 1rem;
+  border: none;
+  border-radius: 10px;
+  outline: none;
+  background: white;
 `;
 
 const TextArea = styled.textarea`
-  padding:1rem;
-  border:none;
-  border-radius:10px;
-  min-height:140px;
-  resize:none;
+  padding: 1rem;
+  border: none;
+  border-radius: 10px;
+  min-height: 140px;
+  resize: none;
+  background: white;
 `;
 
 const SubmitButton = styled.button`
-  align-self:flex-end;
-  padding:.8rem 2rem;
-  border:none;
-  border-radius:10px;
-  background:#4a3728;
-  color:white;
-  cursor:pointer;
+  align-self: flex-end;
+  padding: .8rem 2rem;
+  border: none;
+  border-radius: 10px;
+  background: #4a3728;
+  color: white;
+  cursor: pointer;
+  transition: all 0.2s;
 
-  &:hover{
-    background:#3a2b20;
+  &:hover {
+    background: #3a2b20;
+    transform: translateY(-2px);
   }
 `;
 
-// Simple Tooth Icon Component
 const ToothIcon = ({ size = 24 }) => (
   <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
     <path d="M7 12c.5 0 1-.5 1-1V8c0-2 1-3 3-3s3 1 3 3v3c0 .5.5 1 1 1h1c1.5 0 3 1 3 3v2c0 2-1 3-3 3h-8c-2 0-3-1-3-3v-2c0-2 1.5-3 3-3h1z" />
@@ -292,8 +284,6 @@ const ToothIcon = ({ size = 24 }) => (
   </svg>
 );
 
-
-// 11. Footer
 const FooterContainer = styled(motion.footer)`
   background-color: #4a3728;
   color: #fff;
@@ -419,9 +409,7 @@ const Home = () => {
   return (
     <>
       <HeroSection>
-        {/* Navigation Bar */}
         <Header />
-        {/* Hero Text & CTA */}
         <ContentWrapper
           initial={{ opacity: 0, y: 30 }}
           animate={{ opacity: 1, y: 0 }}
@@ -432,22 +420,22 @@ const Home = () => {
           <CTAButton>Book Now!</CTAButton>
         </ContentWrapper>
       </HeroSection>
-      {/* Services Banner */}
+
       <ServicesBanner
-        initial={{ opacity: 0 }}
-        whileInView={{ opacity: 1 }}
-        viewport={{ once: true }}
-        transition={{ duration: 1 }}
+        initial={{ opacity: 0, scale: 0.95 }}
+        whileInView={{ opacity: 1, scale: 1 }}
+        viewport={{ once: false, margin: "-50px" }}
+        transition={{ duration: 0.8 }}
       >
         <BannerTitle>Services Offered</BannerTitle>
       </ServicesBanner>
-      {/* Services Section */}
+
       <ServicesSection>
         <ServicesGrid>
           <ServiceCard
-            initial={{ opacity: 0, y: 50 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true, margin: "-100px" }}
+            initial={{ opacity: 0, x: -50 }}
+            whileInView={{ opacity: 1, x: 0 }}
+            viewport={{ once: false, margin: "-100px" }}
             transition={{ duration: 0.6, delay: 0.2 }}
           >
             <ServiceImage 
@@ -459,9 +447,9 @@ const Home = () => {
           </ServiceCard>
           
           <ServiceCard
-            initial={{ opacity: 0, y: 50 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true, margin: "-100px" }}
+            initial={{ opacity: 0, x: 50 }}
+            whileInView={{ opacity: 1, x: 0 }}
+            viewport={{ once: false, margin: "-100px" }}
             transition={{ duration: 0.6, delay: 0.4 }}
           >
             <ServiceImage 
@@ -473,11 +461,35 @@ const Home = () => {
           </ServiceCard>
         </ServicesGrid>
       </ServicesSection>
-      {/* Comments Section */}
-      <CommentsSection>
-        <Watermark>Dr A</Watermark>
-        <CommentsTitle>LET US KNOW YOUR COMMENTS</CommentsTitle>
-        <CommentsContainer>
+
+      <CommentsSection
+        initial={{ opacity: 0 }}
+        whileInView={{ opacity: 1 }}
+        viewport={{ once: false }}
+        transition={{ duration: 0.8 }}
+      >
+        <Watermark
+          initial={{ x: -100, opacity: 0 }}
+          whileInView={{ x: 0, opacity: 0.04 }}
+          viewport={{ once: false }}
+          transition={{ duration: 1.2 }}
+        >
+          Dr A
+        </Watermark>
+        <CommentsTitle
+          initial={{ y: 20, opacity: 0 }}
+          whileInView={{ y: 0, opacity: 1 }}
+          viewport={{ once: false }}
+          transition={{ duration: 0.6, delay: 0.2 }}
+        >
+          LET US KNOW YOUR COMMENTS
+        </CommentsTitle>
+        <CommentsContainer
+          initial={{ y: 40, opacity: 0 }}
+          whileInView={{ y: 0, opacity: 1 }}
+          viewport={{ once: false }}
+          transition={{ duration: 0.6, delay: 0.4 }}
+        >
           <CommentForm>
             <FormRow>
               <Input placeholder="Your Name"/>
@@ -490,11 +502,11 @@ const Home = () => {
           </CommentForm>
         </CommentsContainer>
       </CommentsSection>
-      {/* Footer */}
+
       <FooterContainer
-        initial={{ opacity: 0 }}
-        whileInView={{ opacity: 1 }}
-        viewport={{ once: true }}
+        initial={{ opacity: 0, y: 20 }}
+        whileInView={{ opacity: 1, y: 0 }}
+        viewport={{ once: false }}
         transition={{ duration: 0.8 }}
       >
         <FooterGrid>
