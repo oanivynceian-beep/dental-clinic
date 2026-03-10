@@ -8,75 +8,113 @@ import logo from "../logo2.png";
    Styled Components
 ================================ */
 
-const NavContainer = styled.div`
+const NavContainer = styled.header`
   position: fixed;
-  top: 20px;
-  left: 50%;
-  transform: translateX(-50%);
-  z-index: 100;
-  width: 90%;
+  top: 10px;
+  left: 10px;
+  right: 10px;
+
+  z-index: 1000;
+
   max-width: 1100px;
-  background-color: rgba(255, 255, 255, 0.95);
+  margin: 0 auto;
+
+  background: rgba(255, 255, 255, 0.95);
   backdrop-filter: blur(10px);
+
   border-radius: 12px;
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
-  padding: 15px 30px;
+  padding: 14px 20px;
 
   display: flex;
   justify-content: space-between;
   align-items: center;
 
+  box-shadow: 0 6px 20px rgba(0,0,0,0.08);
+
   transition: all 0.3s ease;
 
   @media (max-width: 768px) {
-    padding: 12px 20px;
-    width: 95%;
-    top: 10px;
-    flex-wrap: wrap;
+    left: 8px;
+    right: 8px;
+    padding: 12px 16px;
+  }
+
+  @media (max-width: 480px) {
+    left: 6px;
+    right: 6px;
+    padding: 10px 14px;
   }
 `;
-
 const Logo = styled.div`
   display: flex;
   align-items: center;
 
   img {
-    height: 48px;
+    height: 46px;
 
     @media (max-width: 768px) {
-      height: 36px;
+      height: 38px;
+    }
+
+    @media (max-width: 480px) {
+      height: 32px;
     }
   }
 `;
 
 const NavLinks = styled.nav`
   display: flex;
-  gap: 40px;
   align-items: center;
+  gap: 36px;
+
+  @media (max-width: 900px) {
+    gap: 24px;
+  }
 
   @media (max-width: 768px) {
-    display: ${(props) => (props.$isOpen ? "flex" : "none")};
-    flex-direction: column;
     position: absolute;
+
     top: 100%;
     left: 0;
     right: 0;
 
-    background: white;
-    padding: 20px;
-    border-radius: 0 0 12px 12px;
-    box-shadow: 0 10px 20px rgba(0, 0, 0, 0.1);
+    display: ${(props) => (props.$isOpen ? "flex" : "none")};
+    flex-direction: column;
 
-    gap: 10px;
-    margin-top: 5px;
+    background: white;
+
+    padding: 20px;
+    gap: 14px;
+
+    border-radius: 0 0 12px 12px;
+    box-shadow: 0 12px 25px rgba(0, 0, 0, 0.1);
+
+    animation: slideDown 0.25s ease;
+
+    @keyframes slideDown {
+      from {
+        opacity: 0;
+        transform: translateY(-10px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+  }
+
+  @media (max-width: 400px) {
+    padding: 18px 12px;
   }
 `;
 
 const NavItem = styled(Link)`
   text-decoration: none;
   color: #5d4037;
+
   font-weight: 500;
-  font-size: 14px;
+  font-size: 15px;
+
   position: relative;
   cursor: pointer;
 
@@ -89,11 +127,14 @@ const NavItem = styled(Link)`
   &::after {
     content: "";
     position: absolute;
+
     width: 0;
     height: 2px;
+
     bottom: -5px;
     left: 0;
-    background-color: #6d4c41;
+
+    background: #6d4c41;
     transition: width 0.3s ease;
   }
 
@@ -102,42 +143,48 @@ const NavItem = styled(Link)`
   }
 
   @media (max-width: 768px) {
-    font-size: 18px;
-    padding: 15px 0;
     width: 100%;
     text-align: center;
+
+    font-size: 18px;
+    padding: 14px 0;
 
     &::after {
       display: none;
     }
   }
+
+  @media (max-width: 400px) {
+    font-size: 17px;
+  }
 `;
 
 const ContactButton = styled.button`
-  background-color: #5d4037;
+  background: #5d4037;
   color: white;
-  border: none;
 
-  padding: 10px 24px;
+  border: none;
   border-radius: 8px;
 
+  padding: 10px 22px;
+
   font-weight: 600;
-  font-size: 13px;
+  font-size: 14px;
 
   cursor: pointer;
 
-  transition: transform 0.2s ease, background-color 0.2s ease;
+  transition: all 0.25s ease;
 
   &:hover {
-    background-color: #4e342e;
+    background: #4e342e;
     transform: translateY(-2px);
-    box-shadow: 0 4px 12px rgba(93, 64, 55, 0.3);
+    box-shadow: 0 4px 12px rgba(93, 64, 55, 0.35);
   }
 
   @media (max-width: 768px) {
     width: 100%;
-    margin-top: 20px;
-    padding: 15px;
+    margin-top: 15px;
+    padding: 14px;
     font-size: 16px;
   }
 `;
@@ -152,7 +199,9 @@ const MenuButton = styled.button`
   cursor: pointer;
 
   @media (max-width: 768px) {
-    display: block;
+    display: flex;
+    align-items: center;
+    justify-content: center;
   }
 `;
 
@@ -178,9 +227,7 @@ const MobileButton = styled.div`
 const Header = () => {
   const [isOpen, setIsOpen] = useState(false);
 
-  const closeMenu = () => {
-    setIsOpen(false);
-  };
+  const closeMenu = () => setIsOpen(false);
 
   return (
     <NavContainer>
@@ -210,7 +257,9 @@ const Header = () => {
         </NavItem>
 
         <MobileButton>
-          <ContactButton onClick={closeMenu}>Contact Us</ContactButton>
+          <ContactButton onClick={closeMenu}>
+            Contact Us
+          </ContactButton>
         </MobileButton>
       </NavLinks>
 
