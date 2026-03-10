@@ -3,6 +3,7 @@ import styled from 'styled-components';
 import { Phone, MapPin, Clock, Instagram, Facebook } from 'lucide-react';
 import { motion } from "framer-motion";
 import Header from '../components/Header';
+import logo3 from '../logo3.png';
 
 // --- Styled Components ---
 
@@ -276,14 +277,6 @@ const SubmitButton = styled.button`
   }
 `;
 
-const ToothIcon = ({ size = 24 }) => (
-  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-    <path d="M7 12c.5 0 1-.5 1-1V8c0-2 1-3 3-3s3 1 3 3v3c0 .5.5 1 1 1h1c1.5 0 3 1 3 3v2c0 2-1 3-3 3h-8c-2 0-3-1-3-3v-2c0-2 1.5-3 3-3h1z" />
-    <path d="M10 17v2" />
-    <path d="M14 17v2" />
-  </svg>
-);
-
 const FooterContainer = styled(motion.footer)`
   background-color: #4a3728;
   color: #fff;
@@ -389,10 +382,11 @@ const FooterLogoSection = styled.div`
   text-align: center;
   gap: 1rem;
 
-  svg {
+  img {
     width: 120px;
     height: 120px;
     opacity: 0.5;
+    object-fit: contain;
   }
 `;
 
@@ -552,7 +546,7 @@ const Home = () => {
           </FooterColumn>
           <FooterColumn>
             <FooterLogoSection>
-              <ToothIcon size={80} />
+              <img src={logo3} alt="Dr. A Dental Clinic Logo" />
               <Logo style={{ color: '#fff', background: 'transparent' }}>
                 DR. A DENTAL CLINIC
               </Logo>
