@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import { useLocation } from "react-router-dom";
 import styled from "styled-components";
 import { Link } from "react-router-dom";
 import { Menu, X } from "lucide-react";
@@ -111,29 +112,26 @@ const NavLinks = styled.nav`
 const NavItem = styled(Link)`
   text-decoration: none;
   color: #5d4037;
-
+  background: transparent;
+  border-radius: 6px;
   font-weight: 500;
   font-size: 15px;
-
   position: relative;
   cursor: pointer;
-
-  transition: color 0.3s ease;
+  transition: color 0.3s, background 0.3s;
 
   &:hover {
     color: #3e2723;
+    background: ${(props) => (props.$active ? "#6d4c41" : "#f5e9e5")};
   }
 
   &::after {
     content: "";
     position: absolute;
-
-    width: 0;
+    width: ${(props) => (props.$active ? "100%" : "0")};
     height: 2px;
-
     bottom: -5px;
     left: 0;
-
     background: #6d4c41;
     transition: width 0.3s ease;
   }
@@ -145,12 +143,16 @@ const NavItem = styled(Link)`
   @media (max-width: 768px) {
     width: 100%;
     text-align: center;
-
     font-size: 18px;
     padding: 14px 0;
-
     &::after {
-      display: none;
+      display: block;
+      width: ${(props) => (props.$active ? "100%" : "0")};
+      height: 2px;
+      bottom: 0;
+      left: 0;
+      background: #6d4c41;
+      transition: width 0.3s ease;
     }
   }
 
@@ -159,20 +161,17 @@ const NavItem = styled(Link)`
   }
 `;
 
-const ContactButton = styled.button`
+const ContactButton = styled(Link)`
+  display: inline-block;
   background: #5d4037;
   color: white;
-
   border: none;
   border-radius: 8px;
-
   padding: 10px 22px;
-
   font-weight: 600;
   font-size: 14px;
-
   cursor: pointer;
-
+  text-decoration: none;
   transition: all 0.25s ease;
 
   &:hover {
@@ -186,6 +185,7 @@ const ContactButton = styled.button`
     margin-top: 15px;
     padding: 14px;
     font-size: 16px;
+    text-align: center;
   }
 `;
 
@@ -220,13 +220,9 @@ const MobileButton = styled.div`
   }
 `;
 
-/* ===============================
-   Header Component
-================================ */
-
 const Header = () => {
   const [isOpen, setIsOpen] = useState(false);
-
+  const location = useLocation();
   const closeMenu = () => setIsOpen(false);
 
   return (
@@ -240,31 +236,31 @@ const Header = () => {
       </MenuButton>
 
       <NavLinks $isOpen={isOpen}>
-        <NavItem to="/" onClick={closeMenu}>
+        <NavItem to="/" onClick={closeMenu} $active={location.pathname === "/"}>
           Home
         </NavItem>
 
-        <NavItem to="/services" onClick={closeMenu}>
+        <NavItem to="/services" onClick={closeMenu} $active={location.pathname === "/services"}>
           Services
         </NavItem>
 
-        <NavItem to="/know-us" onClick={closeMenu}>
+        <NavItem to="/know-us" onClick={closeMenu} $active={location.pathname === "/know-us"}>
           Know Us
         </NavItem>
 
-        <NavItem to="/recent-activities" onClick={closeMenu}>
+        <NavItem to="/recent-activities" onClick={closeMenu} $active={location.pathname === "/recent-activities"}>
           Recent Activities
         </NavItem>
 
         <MobileButton>
-          <ContactButton onClick={closeMenu}>
+          <ContactButton to="/contact" onClick={closeMenu}>
             Contact Us
           </ContactButton>
         </MobileButton>
       </NavLinks>
 
       <DesktopButton>
-        <ContactButton>Contact Us</ContactButton>
+        <ContactButton to="/contact">Contact Us</ContactButton>
       </DesktopButton>
     </NavContainer>
   );
