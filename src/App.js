@@ -6,6 +6,7 @@ import KnowUs from './pages/KnowUs';
 import RecentActivities from './pages/RecentActivities';
 import Contact from './pages/Contact';
 import BookNow from './pages/Book';
+import Admin from './pages/Admin';
 
 function App() {
   return (
@@ -17,6 +18,7 @@ function App() {
         <Route path="/recent-activities" element={<RecentActivities />} />
         <Route path="/contact" element={<Contact />} />
         <Route path="/book-now" element={<BookNow />} />
+        <Route path="/admin" element={<Admin/>}/>
  </Routes>
  </Router>
  );
