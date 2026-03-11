@@ -190,18 +190,6 @@ const LargeTeamIcon = styled(motion.div)`
   }
 `;
 
-const SectionTitle = styled(motion.h2)`
-  font-size: 2.5rem;
-  color: #4a3728;
-  font-weight: 800;
-  text-transform: uppercase;
-  letter-spacing: 1px;
-  text-align: center;
-
-  @media (max-width: 768px) {
-    font-size: 1.75rem;
-  }
-`;
 
 const KnowUs = () => {
   return (

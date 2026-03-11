@@ -109,12 +109,6 @@ const Label = styled.label`
   letter-spacing: 0.5px;
 `;
 
-const InputWrapper = styled.div`
-  position: relative;
-  display: flex;
-  align-items: center;
-`;
-
 const StyledInput = styled.input`
   width: 100%;
   padding: 1.25rem;
