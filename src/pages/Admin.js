@@ -1,7 +1,9 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import styled from 'styled-components';
 import { motion } from "framer-motion";
-import { ChevronRight, ChevronLeft } from 'lucide-react';
+import { ArrowRight, ChevronRight, ChevronLeft, Loader2 } from 'lucide-react';
+import { db } from './firebase';
+import { collection, onSnapshot, query, orderBy, updateDoc, doc } from 'firebase/firestore';
 
 import AdminSidebar from '../components/Sidebar';
 
@@ -132,7 +134,7 @@ const BookingsSlider = styled.div`
 `;
 
 const BookingCard = styled(motion.div)`
-  min-width: 280px;
+  min-width: 320px;
   background: white;
   border-radius: 25px;
   padding: 2rem;
@@ -142,7 +144,7 @@ const BookingCard = styled(motion.div)`
   gap: 1.25rem;
 
   @media (max-width: 768px) {
-    min-width: 260px;
+    min-width: 280px;
     padding: 1.5rem;
   }
 `;
@@ -151,6 +153,9 @@ const PatientName = styled.h3`
   font-size: 1.75rem;
   font-weight: 900;
   color: #4a3728;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 `;
 
 const BookingDetail = styled.div`
@@ -178,8 +183,8 @@ const DateTimeRow = styled.div`
   gap: 1rem;
 `;
 
-const ApproveButton = styled.button`
-  background: #6b4226;
+const ActionButton = styled.button`
+  background: ${props => props.$variant === 'cancel' ? '#f44336' : '#6b4226'};
   color: white;
   border: none;
   padding: 1rem;
@@ -189,10 +194,16 @@ const ApproveButton = styled.button`
   cursor: pointer;
   transition: all 0.2s;
   margin-top: 1rem;
+  flex: 1;
 
   &:hover {
-    background: #4a3728;
+    background: ${props => props.$variant === 'cancel' ? '#d32f2f' : '#4a3728'};
     transform: translateY(-2px);
+  }
+
+  &:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
   }
 `;
 
@@ -218,21 +229,59 @@ const ArrowButton = styled.div`
   }
 `;
 
+const EmptyState = styled.div`
+  padding: 4rem;
+  text-align: center;
+  background: white;
+  border-radius: 30px;
+  width: 100%;
+  color: #bcaaa4;
+  font-weight: 600;
+`;
+
+
+
 const Admin = () => {
   const [activeTab, setActiveTab] = useState('Online Bookings');
+  const [bookings, setBookings] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const q = query(collection(db, 'bookings'), orderBy('createdAt', 'desc'));
+    const unsubscribe = onSnapshot(q, (snapshot) => {
+      const bookingsData = snapshot.docs.map(doc => ({
+        id: doc.id,
+        ...doc.data()
+      }));
+      setBookings(bookingsData);
+      setLoading(false);
+    });
+
+    return () => unsubscribe();
+  }, []);
+
+  const handleStatusUpdate = async (id, newStatus) => {
+    try {
+      await updateDoc(doc(db, 'bookings', id), {
+        status: newStatus
+      });
+    } catch (error) {
+      console.error("Error updating status: ", error);
+    }
+  };
+
+  const filteredBookings = bookings.filter(b => {
+    if (activeTab === 'Online Bookings') return true;
+    if (activeTab === 'Pending') return b.status === 'pending';
+    if (activeTab === 'Approved') return b.status === 'approved';
+    return true;
+  });
 
   const stats = [
-    { label: 'Bookings', value: 123 },
-    { label: 'Pendings', value: 123 },
-    { label: 'Approved', value: 123 },
-    { label: 'Comments', value: 123 },
-  ];
-
-  const bookings = [
-    { name: 'Adrian Albener', service: 'Teeth Removal', date: 'January 01, 2025', time: '12:00' },
-    { name: 'Adrian Albener', service: 'Teeth Removal', date: 'January 01, 2025', time: '12:00' },
-    { name: 'Adrian Albener', service: 'Teeth Removal', date: 'January 01, 2025', time: '12:00' },
-    { name: 'Adrian Albener', service: 'Teeth Removal', date: 'January 01, 2025', time: '12:00' },
+    { label: 'Bookings', value: bookings.length },
+    { label: 'Pendings', value: bookings.filter(b => b.status === 'pending').length },
+    { label: 'Approved', value: bookings.filter(b => b.status === 'approved').length },
+    { label: 'Comments', value: 0 },
   ];
 
   // Ref for BookingsSlider
@@ -287,44 +336,96 @@ const Admin = () => {
           ))}
         </Tabs>
 
-        <div style={{ display: 'flex', alignItems: 'center', gap: '2rem' }}>
-          <ArrowButton onClick={handleBack}>
-            <ChevronLeft size={32} color="#4a3728" />
-          </ArrowButton>
-          <BookingsSlider ref={sliderRef}>
-            {bookings.map((booking, index) => (
-              <BookingCard
-                key={index}
-                initial={{ opacity: 0, scale: 0.9 }}
-                animate={{ opacity: 1, scale: 1 }}
-                transition={{ delay: index * 0.1 }}
-              >
-                <PatientName>{booking.name}</PatientName>
-                
-                <BookingDetail>
-                  <DetailLabel>Service:</DetailLabel>
-                  <DetailValue>{booking.service}</DetailValue>
-                </BookingDetail>
-
-                <DateTimeRow>
+        {loading ? (
+          <EmptyState>
+            <Loader2 className="animate-spin mx-auto mb-2" size={32} />
+            Loading reservations...
+          </EmptyState>
+        ) : filteredBookings.length === 0 ? (
+          <EmptyState>No reservations found in this category.</EmptyState>
+        ) : (
+          <div style={{ display: 'flex', alignItems: 'center', gap: '2rem' }}>
+            <ArrowButton onClick={handleBack}>
+              <ChevronLeft size={32} color="#4a3728" />
+            </ArrowButton>
+            <BookingsSlider ref={sliderRef}>
+              {filteredBookings.map((booking, index) => (
+                <BookingCard
+                  key={booking.id}
+                  initial={{ opacity: 0, scale: 0.9 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  transition={{ delay: index * 0.1 }}
+                >
+                  <PatientName title={booking.fullName}>{booking.fullName}</PatientName>
+                  
                   <BookingDetail>
-                    <DetailLabel>Date:</DetailLabel>
-                    <DetailValue>{booking.date}</DetailValue>
+                    <DetailLabel>Reason:</DetailLabel>
+                    <DetailValue>{booking.reason || 'Not specified'}</DetailValue>
                   </BookingDetail>
-                  <BookingDetail>
-                    <DetailLabel>Time:</DetailLabel>
-                    <DetailValue style={{ fontSize: '1.5rem' }}>{booking.time}</DetailValue>
-                  </BookingDetail>
-                </DateTimeRow>
 
-                <ApproveButton>Approve</ApproveButton>
-              </BookingCard>
-            ))}
-          </BookingsSlider>
-          <ArrowButton onClick={handleNext}>
-            <ChevronRight size={32} color="#4a3728" />
-          </ArrowButton>
-        </div>
+                  <DateTimeRow>
+                    <BookingDetail>
+                      <DetailLabel>Date:</DetailLabel>
+                      <DetailValue>
+                        {(() => {
+                          if (!booking.date) return 'Not specified';
+                          const d = new Date(booking.date);
+                          if (isNaN(d)) return booking.date;
+                          return d.toLocaleDateString('en-US', {
+                            month: 'long',
+                            day: 'numeric',
+                            year: 'numeric'
+                          });
+                        })()}
+                      </DetailValue>
+                    </BookingDetail>
+                    <BookingDetail>
+                      <DetailLabel>Branch:</DetailLabel>
+                      <DetailValue style={{ textTransform: 'capitalize' }}>{booking.branch}</DetailValue>
+                    </BookingDetail>
+                  </DateTimeRow>
+
+                  <BookingDetail>
+                    <DetailLabel>Contact:</DetailLabel>
+                    <DetailValue style={{ fontSize: '0.9rem' }}>{booking.phone}</DetailValue>
+                  </BookingDetail>
+
+                  <div style={{ display: 'flex', gap: '1rem' }}>
+                    {booking.status === 'pending' && (
+                      <>
+                        <ActionButton 
+                          $variant="approve" 
+                          onClick={() => handleStatusUpdate(booking.id, 'approved')}
+                        >
+                          Approve
+                        </ActionButton>
+                        <ActionButton 
+                          $variant="cancel" 
+                          onClick={() => handleStatusUpdate(booking.id, 'cancelled')}
+                        >
+                          Cancel
+                        </ActionButton>
+                      </>
+                    )}
+                    {booking.status === 'approved' && (
+                      <DetailValue style={{ color: '#4caf50', textAlign: 'center', width: '100%', padding: '1rem' }}>
+                        ✓ Approved
+                      </DetailValue>
+                    )}
+                    {booking.status === 'cancelled' && (
+                      <DetailValue style={{ color: '#f44336', textAlign: 'center', width: '100%', padding: '1rem' }}>
+                        ✕ Cancelled
+                      </DetailValue>
+                    )}
+                  </div>
+                </BookingCard>
+              ))}
+            </BookingsSlider>
+            <ArrowButton onClick={handleNext}>
+              <ChevronRight size={32} color="#4a3728" />
+            </ArrowButton>
+          </div>
+        )}
       </MainContent>
     </AdminContainer>
   );

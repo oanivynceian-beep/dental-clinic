@@ -1,14 +1,26 @@
 import React, { useState } from 'react';
-import styled from 'styled-components';
+import { useNavigate } from 'react-router-dom';
+import styled, { keyframes } from 'styled-components';
 import { motion, AnimatePresence } from "framer-motion";
 import Header from '../components/Header';
-import { Calendar, User, Phone, MessageSquare, Mail, CheckCircle2, ArrowRight } from 'lucide-react';
+import { Calendar, User, Phone, MessageSquare, Mail, CheckCircle2, ArrowRight, Loader2 } from 'lucide-react';
+import { db } from './firebase';
+import { collection, addDoc, serverTimestamp } from 'firebase/firestore';
 
 const PageContainer = styled.div`
   min-height: 100vh;
   background-color: #fdfaf7;
   position: relative;
   overflow: hidden;
+`;
+
+const spin = keyframes`
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+`;
+
+const Spinner = styled(Loader2)`
+  animation: ${spin} 1s linear infinite;
 `;
 
 const DecorativeBlob = styled(motion.div)`
@@ -24,7 +36,6 @@ const DecorativeBlob = styled(motion.div)`
   left: ${props => props.$left || 'auto'};
   right: ${props => props.$right || 'auto'};
 `;
-
 
 const ContentSection = styled.section`
   padding: 10rem 5% 6rem;
@@ -107,6 +118,12 @@ const Label = styled.label`
   font-size: 0.95rem;
   text-transform: uppercase;
   letter-spacing: 0.5px;
+`;
+
+const InputWrapper = styled.div`
+  position: relative;
+  display: flex;
+  align-items: center;
 `;
 
 const StyledInput = styled.input`
@@ -203,17 +220,39 @@ const SuccessOverlay = styled(motion.div)`
 `;
 
 const BookNow = () => {
+  const navigate = useNavigate();
   const [isSubmitted, setIsSubmitted] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  const [formData, setFormData] = useState({
+    fullName: '',
+    email: '',
+    phone: '',
+    branch: '',
+    date: '',
+    reason: ''
+  });
 
-  const handleSubmit = (e) => {
+  const handleChange = (e) => {
+    const { name, value } = e.target;
+    setFormData(prev => ({ ...prev, [name]: value }));
+  };
+
+  const handleSubmit = async (e) => {
     e.preventDefault();
     setIsLoading(true);
-    // Simulate API call
-    setTimeout(() => {
+    try {
+      await addDoc(collection(db, 'bookings'), {
+        ...formData,
+        status: 'pending',
+        createdAt: serverTimestamp()
+      });
+      navigate('/'); // Redirect to homepage on success
+    } catch (error) {
+      console.error("Error adding document: ", error);
+      alert("Something went wrong. Please try again.");
+    } finally {
       setIsLoading(false);
-      setIsSubmitted(true);
-    }, 1500);
+    }
   };
 
   return (
@@ -259,22 +298,48 @@ const BookNow = () => {
                 <FormGrid>
                   <FormGroup>
                     <Label><User size={16} /> Full Name</Label>
-                    <StyledInput type="text" placeholder="John Doe" required />
+                    <StyledInput 
+                      type="text" 
+                      name="fullName"
+                      value={formData.fullName}
+                      onChange={handleChange}
+                      placeholder="John Doe" 
+                      required 
+                    />
                   </FormGroup>
                   <FormGroup>
                     <Label><Mail size={16} /> Email Address</Label>
-                    <StyledInput type="email" placeholder="john@example.com" required />
+                    <StyledInput 
+                      type="email" 
+                      name="email"
+                      value={formData.email}
+                      onChange={handleChange}
+                      placeholder="john@example.com" 
+                      required 
+                    />
                   </FormGroup>
                 </FormGrid>
 
                 <FormGrid>
                   <FormGroup>
                     <Label><Phone size={16} /> Phone Number</Label>
-                    <StyledInput type="tel" placeholder="0912 345 6789" required />
+                    <StyledInput 
+                      type="tel" 
+                      name="phone"
+                      value={formData.phone}
+                      onChange={handleChange}
+                      placeholder="0912 345 6789" 
+                      required 
+                    />
                   </FormGroup>
                   <FormGroup>
                     <Label><Calendar size={16} /> Preferred Branch</Label>
-                    <StyledSelect required>
+                    <StyledSelect 
+                      name="branch"
+                      value={formData.branch}
+                      onChange={handleChange}
+                      required
+                    >
                       <option value="">Select a branch</option>
                       <option value="sasa">Sasa Branch (Main)</option>
                       <option value="matina">Matina Branch</option>
@@ -284,12 +349,23 @@ const BookNow = () => {
 
                 <FormGroup>
                   <Label><Calendar size={16} /> Preferred Date</Label>
-                  <StyledInput type="date" required />
+                  <StyledInput 
+                    type="date" 
+                    name="date"
+                    value={formData.date}
+                    onChange={handleChange}
+                    required 
+                  />
                 </FormGroup>
 
                 <FormGroup>
                   <Label><MessageSquare size={16} /> Reason for Visit</Label>
-                  <StyledTextArea placeholder="Tell us about your dental concern (e.g., Cleaning, Check-up, Braces)..." />
+                  <StyledTextArea 
+                    name="reason"
+                    value={formData.reason}
+                    onChange={handleChange}
+                    placeholder="Tell us about your dental concern (e.g., Cleaning, Check-up, Braces)..." 
+                  />
                 </FormGroup>
 
                 <SubmitButton
@@ -298,7 +374,11 @@ const BookNow = () => {
                   whileHover={{ scale: 1.02, y: -2 }}
                   whileTap={{ scale: 0.98 }}
                 >
-                  {isLoading ? "Processing..." : (
+                  {isLoading ? (
+                    <>
+                      <Spinner size={20} /> Processing...
+                    </>
+                  ) : (
                     <>
                       Confirm Appointment <ArrowRight size={20} />
                     </>
