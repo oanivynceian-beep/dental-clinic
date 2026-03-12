@@ -1,9 +1,11 @@
 import React, { useState, useRef, useEffect } from 'react';
 import styled from 'styled-components';
 import { motion } from "framer-motion";
-import { ChevronRight, ChevronLeft, Loader2 } from 'lucide-react';
+import { ChevronRight, ChevronLeft, Loader2, Lock, LogIn, Eye, EyeOff } from 'lucide-react';
 import { db } from './firebase';
 import { collection, onSnapshot, query, orderBy, updateDoc, doc } from 'firebase/firestore';
+import { useNavigate } from 'react-router-dom';
+import emailjs from '@emailjs/browser';
 
 import AdminSidebar from '../components/Sidebar';
 
@@ -239,15 +241,77 @@ const EmptyState = styled.div`
   font-weight: 600;
 `;
 
+const LoginContainer = styled.div`
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 100vh;
+  background-color: #fdfaf7;
+  padding: 2rem;
+  text-align: center;
+`;
 
+const LoginCard = styled(motion.div)`
+  background: white;
+  padding: 3rem;
+  border-radius: 40px;
+  box-shadow: 0 20px 50px rgba(74, 55, 40, 0.1);
+  max-width: 450px;
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2rem;
+`;
+
+const LoginButton = styled.button`
+  background-color: #4a3728;
+  color: white;
+  border: none;
+  padding: 1.25rem 2.5rem;
+  border-radius: 20px;
+  font-size: 1.1rem;
+  font-weight: 800;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  transition: all 0.3s ease;
+
+  &:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 10px 20px rgba(74, 55, 40, 0.2);
+  }
+`;
 
 const Admin = () => {
   const [activeTab, setActiveTab] = useState('Online Bookings');
   const [bookings, setBookings] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [password, setPassword] = useState('');
+  const [isAuthorized, setIsAuthorized] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
+  const [loginError, setLoginError] = useState('');
+  const navigate = useNavigate();
+  const sliderRef = useRef(null);
 
   useEffect(() => {
-    const q = query(collection(db, 'bookings'), orderBy('createdAt', 'desc'));
+    const savedAuth = sessionStorage.getItem('admin_auth');
+    if (savedAuth === 'admin123') {
+      setIsAuthorized(true);
+      setPassword('admin123');
+    }
+  }, []);
+
+  useEffect(() => {
+    if (!isAuthorized) return;
+
+    const q = query(
+      collection(db, 'bookings'), 
+      orderBy('createdAt', 'desc')
+    );
+    
     const unsubscribe = onSnapshot(q, (snapshot) => {
       const bookingsData = snapshot.docs.map(doc => ({
         id: doc.id,
@@ -255,18 +319,142 @@ const Admin = () => {
       }));
       setBookings(bookingsData);
       setLoading(false);
+    }, (error) => {
+      console.error("Firestore error:", error);
+      if (error.code === 'permission-denied') {
+        setLoginError("Invalid access key or permissions.");
+        setIsAuthorized(false);
+        sessionStorage.removeItem('admin_auth');
+      }
     });
 
     return () => unsubscribe();
-  }, []);
+  }, [isAuthorized, password]);
+
+  const handleLogin = (e) => {
+    e.preventDefault();
+    if (password === 'admin123') {
+      setIsAuthorized(true);
+      setLoginError('');
+      sessionStorage.setItem('admin_auth', 'admin123');
+    } else {
+      setLoginError('Incorrect password. Please try again.');
+    }
+  };
+
+  const handleLogout = () => {
+    setIsAuthorized(false);
+    setPassword('');
+    sessionStorage.removeItem('admin_auth');
+    navigate('/');
+  };
+
+  if (!isAuthorized) {
+    return (
+      <LoginContainer>
+        <LoginCard
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+        >
+          <div style={{ background: '#f5f5f5', padding: '1.5rem', borderRadius: '50%' }}>
+            <Lock size={48} color="#4a3728" />
+          </div>
+          <div>
+            <h1 style={{ fontSize: '2rem', fontWeight: 900, color: '#4a3728', marginBottom: '0.5rem' }}>
+              Admin Access
+            </h1>
+            <p style={{ color: '#bcaaa4', fontWeight: 600 }}>
+              Enter the clinic access key to view the dashboard.
+            </p>
+          </div>
+          
+          <form onSubmit={handleLogin} style={{ width: '100%', display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+            <div style={{ position: 'relative', width: '100%' }}>
+              <input
+                type={showPassword ? "text" : "password"}
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                placeholder="Enter Access Key"
+                style={{
+                  width: '100%',
+                  padding: '1.25rem',
+                  paddingRight: '3.5rem',
+                  borderRadius: '15px',
+                  border: '2px solid #f0f0f0',
+                  fontSize: '1rem',
+                  outline: 'none',
+                  transition: 'border-color 0.2s'
+                }}
+              />
+              <div 
+                onClick={() => setShowPassword(!showPassword)}
+                style={{ position: 'absolute', right: '1.25rem', top: '50%', transform: 'translateY(-50%)', cursor: 'pointer', color: '#bcaaa4' }}
+              >
+                {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
+              </div>
+            </div>
+            
+            {loginError && (
+              <p style={{ color: '#f44336', fontSize: '0.9rem', fontWeight: 600 }}>
+                {loginError}
+              </p>
+            )}
+
+            <LoginButton type="submit">
+              <LogIn size={20} /> Access Dashboard
+            </LoginButton>
+          </form>
+        </LoginCard>
+      </LoginContainer>
+    );
+  }
 
   const handleStatusUpdate = async (id, newStatus) => {
     try {
+      const booking = bookings.find(b => b.id === id);
+      
       await updateDoc(doc(db, 'bookings', id), {
         status: newStatus
       });
+
+      if (booking && booking.email) {
+        const templateParams = {
+          to_name: booking.fullName,
+          to_email: booking.email,
+          status: newStatus.toUpperCase(),
+          date: booking.date,
+          branch: booking.branch,
+          reason: booking.reason || 'General Check-up',
+          message: newStatus === 'approved' 
+            ? "Your appointment has been approved! We look forward to seeing you at our clinic." 
+            : "We're sorry, but your appointment has been declined. Please contact us if you'd like to reschedule."
+        };
+
+        // Send email using EmailJS
+        emailjs
+          .send(
+            'service_bo0rrjf',
+            'template_w7emoyl',
+            templateParams,
+            {
+              publicKey: 'igsa6b4JaCPQxbNFE',
+            }
+          )
+          .then(
+            () => {
+              console.log('Email notification sent successfully to:', booking.email);
+            },
+            (error) => {
+              console.error('Failed to send email notification:', error);
+              alert(`Status updated but email failed to send. Check console for details.`);
+            }
+          );
+      } else {
+        console.warn('Booking or email not found for id:', id);
+      }
     } catch (error) {
       console.error("Error updating status: ", error);
+      alert('Failed to update booking status. Please try again.');
     }
   };
 
@@ -283,9 +471,6 @@ const Admin = () => {
     { label: 'Approved', value: bookings.filter(b => b.status === 'approved').length },
     { label: 'Comments', value: 0 },
   ];
-
-  // Ref for BookingsSlider
-  const sliderRef = useRef(null);
 
   // Scroll handler for NextButton
   const handleNext = () => {
@@ -306,8 +491,30 @@ const Admin = () => {
       <AdminSidebar activeIndex={0} />
       <MainContent>
         <Header>
-          <DashboardTitle>Dashboard</DashboardTitle>
-          <ClinicName>Dr. A Dental Clinic</ClinicName>
+          <div>
+            <DashboardTitle>Dashboard</DashboardTitle>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', marginTop: '0.5rem' }}>
+              <ClinicName>Dr. A Dental Clinic</ClinicName>
+              <span style={{ color: '#e0e0e0' }}>|</span>
+              <span style={{ fontSize: '0.8rem', color: '#bcaaa4', fontWeight: 600 }}>
+                Clinic Access Mode
+              </span>
+              <button 
+                onClick={handleLogout}
+                style={{ 
+                  background: 'none', 
+                  border: 'none', 
+                  color: '#f44336', 
+                  fontSize: '0.8rem', 
+                  fontWeight: 800, 
+                  cursor: 'pointer',
+                  textDecoration: 'underline'
+                }}
+              >
+                Logout
+              </button>
+            </div>
+          </div>
         </Header>
 
         <StatsGrid>
@@ -366,18 +573,7 @@ const Admin = () => {
                   <DateTimeRow>
                     <BookingDetail>
                       <DetailLabel>Date:</DetailLabel>
-                      <DetailValue>
-                        {(() => {
-                          if (!booking.date) return 'Not specified';
-                          const d = new Date(booking.date);
-                          if (isNaN(d)) return booking.date;
-                          return d.toLocaleDateString('en-US', {
-                            month: 'long',
-                            day: 'numeric',
-                            year: 'numeric'
-                          });
-                        })()}
-                      </DetailValue>
+                      <DetailValue>{booking.date}</DetailValue>
                     </BookingDetail>
                     <BookingDetail>
                       <DetailLabel>Branch:</DetailLabel>
