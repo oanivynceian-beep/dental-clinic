@@ -1,7 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import styled from 'styled-components';
-import { motion } from "framer-motion";
-import { ChevronRight, ChevronLeft, Loader2, Lock, LogIn, Eye, EyeOff } from 'lucide-react';
+import { motion, AnimatePresence } from "framer-motion";
+import { ChevronRight, ChevronLeft, Loader2, Lock, LogIn, Eye, EyeOff, LayoutGrid, List, X } from 'lucide-react';
 import { db } from './firebase';
 import { collection, onSnapshot, query, orderBy, updateDoc, doc } from 'firebase/firestore';
 import { useNavigate } from 'react-router-dom';
@@ -209,11 +209,12 @@ const ActionButton = styled.button`
   }
 `;
 
-const ArrowButton = styled.div`
+const ArrowButton = styled.button`
   width: 50px;
   height: 50px;
   background: #e0e0e0;
   border-radius: 50%;
+  border: none;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -222,8 +223,13 @@ const ArrowButton = styled.div`
   align-self: center;
   transition: all 0.2s;
 
-  &:hover {
+  &:hover:not(:disabled) {
     background: #d0d0d0;
+  }
+  
+  &:disabled {
+    opacity: 0.3;
+    cursor: not-allowed;
   }
 
   @media (max-width: 768px) {
@@ -285,6 +291,93 @@ const LoginButton = styled.button`
   }
 `;
 
+const ListViewContainer = styled.div`
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+`;
+
+const ListItem = styled(motion.div)`
+  background: white;
+  padding: 1.5rem 2rem;
+  border-radius: 15px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  box-shadow: 0 5px 15px rgba(0,0,0,0.03);
+  cursor: pointer;
+  transition: transform 0.2s, box-shadow 0.2s;
+
+  &:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 20px rgba(0,0,0,0.06);
+  }
+
+  @media (max-width: 768px) {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.5rem;
+  }
+`;
+
+const ModalOverlay = styled(motion.div)`
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+  backdrop-filter: blur(5px);
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 2rem;
+`;
+
+const ModalContainer = styled(motion.div)`
+  background: white;
+  border-radius: 30px;
+  max-width: 500px;
+  width: 100%;
+  max-height: 90vh;
+  overflow-y: auto;
+  position: relative;
+`;
+
+const CloseButton = styled.button`
+  position: absolute;
+  top: 1.5rem;
+  right: 1.5rem;
+  background: #f5f5f5;
+  border: none;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  color: #4a3728;
+  transition: all 0.2s;
+
+  &:hover {
+    background: #e0e0e0;
+  }
+`;
+
+const formatBookingDate = (dateString) => {
+  if (!dateString) return '';
+  const parts = dateString.split('-');
+  if (parts.length !== 3) return dateString;
+  const date = new Date(parts[0], parts[1] - 1, parts[2]);
+  return date.toLocaleDateString('en-US', {
+    month: 'long',
+    day: 'numeric',
+    year: 'numeric'
+  });
+};
+
 const Admin = () => {
   const [activeTab, setActiveTab] = useState('Online Bookings');
   const [bookings, setBookings] = useState([]);
@@ -293,8 +386,26 @@ const Admin = () => {
   const [isAuthorized, setIsAuthorized] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [loginError, setLoginError] = useState('');
+  const [docLimit, setDocLimit] = useState(3);
+  const [isAtStart, setIsAtStart] = useState(true);
+  const [isAtEnd, setIsAtEnd] = useState(false);
+  const [viewType, setViewType] = useState('slider');
+  const [selectedBooking, setSelectedBooking] = useState(null);
+  const [commentsCount, setCommentsCount] = useState(0);
   const navigate = useNavigate();
   const sliderRef = useRef(null);
+
+  const checkScrollPosition = () => {
+    if (sliderRef.current) {
+      const { scrollLeft, clientWidth, scrollWidth } = sliderRef.current;
+      setIsAtStart(scrollLeft <= 10);
+      setIsAtEnd(scrollLeft + clientWidth >= scrollWidth - 10);
+    }
+  };
+
+  useEffect(() => {
+    setTimeout(checkScrollPosition, 100);
+  }, [bookings, activeTab, docLimit]);
 
   useEffect(() => {
     const savedAuth = sessionStorage.getItem('admin_auth');
@@ -328,7 +439,14 @@ const Admin = () => {
       }
     });
 
-    return () => unsubscribe();
+    const unsubscribeComments = onSnapshot(collection(db, 'comments'), (snapshot) => {
+      setCommentsCount(snapshot.size);
+    });
+
+    return () => {
+      unsubscribe();
+      unsubscribeComments();
+    };
   }, [isAuthorized, password]);
 
   const handleLogin = (e) => {
@@ -422,7 +540,7 @@ const Admin = () => {
           to_name: booking.fullName,
           to_email: booking.email,
           status: newStatus.toUpperCase(),
-          date: booking.date,
+          date: formatBookingDate(booking.date),
           branch: booking.branch,
           reason: booking.reason || 'General Check-up',
           message: newStatus === 'approved' 
@@ -469,13 +587,24 @@ const Admin = () => {
     { label: 'Bookings', value: bookings.length },
     { label: 'Pendings', value: bookings.filter(b => b.status === 'pending').length },
     { label: 'Approved', value: bookings.filter(b => b.status === 'approved').length },
-    { label: 'Comments', value: 0 },
+    { label: 'Comments', value: commentsCount },
   ];
 
   // Scroll handler for NextButton
   const handleNext = () => {
     if (sliderRef.current) {
-      sliderRef.current.scrollBy({ left: 340, behavior: 'smooth' });
+      const isNearEnd = sliderRef.current.scrollLeft + sliderRef.current.clientWidth >= sliderRef.current.scrollWidth - 350;
+      
+      if (isNearEnd) {
+        setDocLimit(prev => prev + 3);
+        setTimeout(() => {
+          if (sliderRef.current) {
+            sliderRef.current.scrollBy({ left: 340, behavior: 'smooth' });
+          }
+        }, 50);
+      } else {
+        sliderRef.current.scrollBy({ left: 340, behavior: 'smooth' });
+      }
     }
   };
 
@@ -531,17 +660,34 @@ const Admin = () => {
           ))}
         </StatsGrid>
 
-        <Tabs>
-          {['Online Bookings', 'Pending', 'Approved'].map(tab => (
-            <Tab 
-              key={tab} 
-              $active={activeTab === tab}
-              onClick={() => setActiveTab(tab)}
+        <div style={{ display: 'flex', flexWrap: 'wrap', gap: '1.5rem', justifyContent: 'space-between', alignItems: 'center', marginBottom: '2rem', borderBottom: '1px solid #e0e0e0', paddingBottom: '1rem' }}>
+          <Tabs style={{ marginBottom: 0, borderBottom: 'none', paddingBottom: 0 }}>
+            {['Online Bookings', 'Pending', 'Approved'].map(tab => (
+              <Tab 
+                key={tab} 
+                $active={activeTab === tab}
+                onClick={() => setActiveTab(tab)}
+              >
+                {tab}
+              </Tab>
+            ))}
+          </Tabs>
+          
+          <div style={{ display: 'flex', gap: '0.5rem', background: '#e0e0e0', padding: '0.25rem', borderRadius: '12px' }}>
+            <button 
+              onClick={() => setViewType('slider')}
+              style={{ padding: '0.5rem', borderRadius: '8px', border: 'none', background: viewType === 'slider' ? 'white' : 'transparent', color: viewType === 'slider' ? '#4a3728' : '#9e9e9e', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: viewType === 'slider' ? '0 2px 5px rgba(0,0,0,0.1)' : 'none', transition: 'all 0.2s' }}
             >
-              {tab}
-            </Tab>
-          ))}
-        </Tabs>
+              <LayoutGrid size={20} />
+            </button>
+            <button 
+              onClick={() => setViewType('list')}
+              style={{ padding: '0.5rem', borderRadius: '8px', border: 'none', background: viewType === 'list' ? 'white' : 'transparent', color: viewType === 'list' ? '#4a3728' : '#9e9e9e', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: viewType === 'list' ? '0 2px 5px rgba(0,0,0,0.1)' : 'none', transition: 'all 0.2s' }}
+            >
+              <List size={20} />
+            </button>
+          </div>
+        </div>
 
         {loading ? (
           <EmptyState>
@@ -550,13 +696,56 @@ const Admin = () => {
           </EmptyState>
         ) : filteredBookings.length === 0 ? (
           <EmptyState>No reservations found in this category.</EmptyState>
+        ) : viewType === 'list' ? (
+          <ListViewContainer>
+            {filteredBookings.slice(0, docLimit).map((booking, index) => (
+              <ListItem 
+                key={booking.id}
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: index * 0.05 }}
+                onClick={() => setSelectedBooking(booking)}
+              >
+                <div>
+                  <h3 style={{ fontSize: '1.25rem', fontWeight: 800, color: '#4a3728', margin: '0 0 0.25rem 0' }}>
+                    {booking.fullName}
+                  </h3>
+                  <span style={{ fontSize: '0.9rem', color: '#bcaaa4', fontWeight: 600 }}>
+                    {formatBookingDate(booking.date)}
+                  </span>
+                </div>
+                
+                <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
+                    {booking.status === 'pending' && <span style={{ color: '#ff9800', fontWeight: 700, fontSize: '0.9rem' }}>Pending</span>}
+                    {booking.status === 'approved' && <span style={{ color: '#4caf50', fontWeight: 700, fontSize: '0.9rem' }}>Approved</span>}
+                    {booking.status === 'cancelled' && <span style={{ color: '#f44336', fontWeight: 700, fontSize: '0.9rem' }}>Cancelled</span>}
+                  
+                  <button style={{ background: '#f5f5f5', border: 'none', padding: '0.5rem 1rem', borderRadius: '10px', fontSize: '0.8rem', fontWeight: 700, color: '#4a3728', cursor: 'pointer' }}>
+                    View Details
+                  </button>
+                </div>
+              </ListItem>
+            ))}
+            
+            <div style={{ display: 'flex', justifyContent: 'center', marginTop: '1rem' }}>
+              <button 
+                onClick={() => setDocLimit(prev => prev + 5)}
+                disabled={docLimit >= filteredBookings.length}
+                style={{
+                  background: '#e0e0e0', color: '#4a3728', border: 'none', padding: '0.75rem 2rem', borderRadius: '15px', fontWeight: 800, cursor: docLimit >= filteredBookings.length ? 'not-allowed' : 'pointer', opacity: docLimit >= filteredBookings.length ? 0.3 : 1
+                }}
+              >
+                Load More
+              </button>
+            </div>
+          </ListViewContainer>
         ) : (
           <div style={{ display: 'flex', alignItems: 'center', gap: '2rem' }}>
-            <ArrowButton onClick={handleBack}>
+            <ArrowButton onClick={handleBack} disabled={isAtStart}>
               <ChevronLeft size={32} color="#4a3728" />
             </ArrowButton>
-            <BookingsSlider ref={sliderRef}>
-              {filteredBookings.map((booking, index) => (
+            <BookingsSlider ref={sliderRef} onScroll={checkScrollPosition}>
+              {filteredBookings.slice(0, docLimit).map((booking, index) => (
                 <BookingCard
                   key={booking.id}
                   initial={{ opacity: 0, scale: 0.9 }}
@@ -573,7 +762,7 @@ const Admin = () => {
                   <DateTimeRow>
                     <BookingDetail>
                       <DetailLabel>Date:</DetailLabel>
-                      <DetailValue>{booking.date}</DetailValue>
+                      <DetailValue>{formatBookingDate(booking.date)}</DetailValue>
                     </BookingDetail>
                     <BookingDetail>
                       <DetailLabel>Branch:</DetailLabel>
@@ -617,12 +806,104 @@ const Admin = () => {
                 </BookingCard>
               ))}
             </BookingsSlider>
-            <ArrowButton onClick={handleNext}>
+            <ArrowButton 
+              onClick={handleNext}
+              disabled={isAtEnd && docLimit >= filteredBookings.length}
+            >
               <ChevronRight size={32} color="#4a3728" />
             </ArrowButton>
           </div>
         )}
       </MainContent>
+
+      <AnimatePresence>
+        {selectedBooking && (
+          <ModalOverlay
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            onClick={() => setSelectedBooking(null)}
+          >
+            <ModalContainer
+              initial={{ scale: 0.9, opacity: 0, y: 20 }}
+              animate={{ scale: 1, opacity: 1, y: 0 }}
+              exit={{ scale: 0.9, opacity: 0, y: 20 }}
+              onClick={e => e.stopPropagation()}
+            >
+              <CloseButton onClick={() => setSelectedBooking(null)}>
+                <X size={20} />
+              </CloseButton>
+              
+              <div style={{ padding: '3rem 2.5rem' }}>
+                <h2 style={{ fontSize: '2rem', fontWeight: 900, color: '#4a3728', marginBottom: '2rem' }}>
+                  Booking Details
+                </h2>
+                
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
+                  <BookingDetail>
+                    <DetailLabel>Patient Name</DetailLabel>
+                    <DetailValue style={{ fontSize: '1.5rem' }}>{selectedBooking.fullName}</DetailValue>
+                  </BookingDetail>
+                  
+                  <BookingDetail>
+                    <DetailLabel>Reason</DetailLabel>
+                    <DetailValue>{selectedBooking.reason || 'Not specified'}</DetailValue>
+                  </BookingDetail>
+
+                  <DateTimeRow>
+                    <BookingDetail>
+                      <DetailLabel>Date</DetailLabel>
+                      <DetailValue>{formatBookingDate(selectedBooking.date)}</DetailValue>
+                    </BookingDetail>
+                    <BookingDetail>
+                      <DetailLabel>Branch</DetailLabel>
+                      <DetailValue style={{ textTransform: 'capitalize' }}>{selectedBooking.branch}</DetailValue>
+                    </BookingDetail>
+                  </DateTimeRow>
+
+                  <BookingDetail>
+                    <DetailLabel>Contact</DetailLabel>
+                    <DetailValue>{selectedBooking.phone}</DetailValue>
+                  </BookingDetail>
+
+                  {selectedBooking.status === 'pending' && (
+                    <div style={{ display: 'flex', gap: '1rem', marginTop: '1rem' }}>
+                      <ActionButton 
+                        $variant="approve" 
+                        onClick={() => {
+                          handleStatusUpdate(selectedBooking.id, 'approved');
+                          setSelectedBooking(null);
+                        }}
+                      >
+                        Approve
+                      </ActionButton>
+                      <ActionButton 
+                        $variant="cancel" 
+                        onClick={() => {
+                          handleStatusUpdate(selectedBooking.id, 'cancelled');
+                          setSelectedBooking(null);
+                        }}
+                      >
+                        Cancel
+                      </ActionButton>
+                    </div>
+                  )}
+                  {selectedBooking.status === 'approved' && (
+                    <div style={{ marginTop: '1rem', padding: '1rem', background: '#e8f5e9', borderRadius: '15px', color: '#4caf50', textAlign: 'center', fontWeight: 800 }}>
+                      ✓ Appointment Approved
+                    </div>
+                  )}
+                  {selectedBooking.status === 'cancelled' && (
+                    <div style={{ marginTop: '1rem', padding: '1rem', background: '#ffebee', borderRadius: '15px', color: '#f44336', textAlign: 'center', fontWeight: 800 }}>
+                      ✕ Appointment Cancelled
+                    </div>
+                  )}
+                </div>
+              </div>
+            </ModalContainer>
+          </ModalOverlay>
+        )}
+      </AnimatePresence>
     </AdminContainer>
   );
 };

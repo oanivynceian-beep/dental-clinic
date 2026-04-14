@@ -146,8 +146,8 @@ const Footer = () => (
       <FooterColumn>
         <FooterTitle>Follow us</FooterTitle>
         <SocialLinks>
-          <SocialIcon href="#" aria-label="Facebook"><Facebook size={20} /></SocialIcon>
-          <SocialIcon href="#" aria-label="Instagram"><Instagram size={20} /></SocialIcon>
+          <SocialIcon href="https://www.facebook.com/dr.ayannadentalclinic" aria-label="Facebook"><Facebook size={20} /></SocialIcon>
+          <SocialIcon href="https://www.instagram.com/dr.adentalclinic" aria-label="Instagram"><Instagram size={20} /></SocialIcon>
         </SocialLinks>
       </FooterColumn>
       <FooterColumn>

@@ -7,6 +7,8 @@ import RecentActivities from './pages/RecentActivities';
 import Contact from './pages/Contact';
 import BookNow from './pages/Book';
 import Admin from './pages/Admin';
+import AdminComments from './pages/AdminComments';
+import AdminCalendar from './pages/AdminCalendar';
 
 function App() {
   return (
@@ -19,6 +21,8 @@ function App() {
         <Route path="/contact" element={<Contact />} />
         <Route path="/book-now" element={<BookNow />} />
         <Route path="/admin" element={<Admin/>}/>
+        <Route path="/admin/calendar" element={<AdminCalendar/>}/>
+        <Route path="/admin/comments" element={<AdminComments/>}/>
  </Routes>
  </Router>
  );

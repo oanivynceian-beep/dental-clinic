@@ -1,9 +1,11 @@
-import React from 'react';
+import React, { useState } from 'react';
 import styled from 'styled-components';
 import { motion } from "framer-motion";
 import Header from '../components/Header';
 import Footer from '../components/Footer';
 import { useNavigate } from 'react-router-dom';
+import { db } from './firebase';
+import { collection, addDoc } from 'firebase/firestore';
 
 
 // --- Styled Components ---
@@ -257,9 +259,14 @@ const SubmitButton = styled.button`
   cursor: pointer;
   transition: all 0.2s;
 
-  &:hover {
+  &:hover:not(:disabled) {
     background: #3a2b20;
     transform: translateY(-2px);
+  }
+
+  &:disabled {
+    opacity: 0.7;
+    cursor: not-allowed;
   }
 `;
 
@@ -267,6 +274,45 @@ const SubmitButton = styled.button`
 
 const Home = () => {
   const navigate = useNavigate();
+  const [formData, setFormData] = useState({ name: '', email: '', comment: '' });
+  const [submitting, setSubmitting] = useState(false);
+  const [message, setMessage] = useState('');
+
+  const handleInputChange = (e) => {
+    const { name, value } = e.target;
+    setFormData(prev => ({
+      ...prev,
+      [name]: value
+    }));
+  };
+
+  const handleSubmitComment = async (e) => {
+    e.preventDefault();
+    
+    if (!formData.name || !formData.email || !formData.comment) {
+      setMessage('Please fill in all fields');
+      return;
+    }
+
+    setSubmitting(true);
+    try {
+      await addDoc(collection(db, 'comments'), {
+        name: formData.name,
+        email: formData.email,
+        comment: formData.comment,
+        timestamp: new Date(),
+      });
+      setMessage('Thank you! Your comment has been submitted.');
+      setFormData({ name: '', email: '', comment: '' });
+      setTimeout(() => setMessage(''), 3000);
+    } catch (error) {
+      console.error('Error adding comment:', error);
+      setMessage('Error submitting comment. Please try again.');
+      setTimeout(() => setMessage(''), 3000);
+    } finally {
+      setSubmitting(false);
+    }
+  };
   return (
     <>
       <HeroSection>
@@ -351,14 +397,31 @@ const Home = () => {
           viewport={{ once: false }}
           transition={{ duration: 0.6, delay: 0.4 }}
         >
-          <CommentForm>
+          <CommentForm onSubmit={handleSubmitComment}>
             <FormRow>
-              <Input placeholder="Your Name"/>
-              <Input placeholder="Your Email"/>
+              <Input 
+                placeholder="Your Name"
+                name="name"
+                value={formData.name}
+                onChange={handleInputChange}
+              />
+              <Input 
+                placeholder="Your Email"
+                name="email"
+                type="email"
+                value={formData.email}
+                onChange={handleInputChange}
+              />
             </FormRow>
-            <TextArea placeholder="Write your comment here..."/>
-            <SubmitButton>
-              Submit Comment
+            <TextArea 
+              placeholder="Write your comment here..."
+              name="comment"
+              value={formData.comment}
+              onChange={handleInputChange}
+            />
+            {message && <p style={{ color: message.includes('Error') ? 'red' : 'green', textAlign: 'center' }}>{message}</p>}
+            <SubmitButton type="submit" disabled={submitting}>
+              {submitting ? 'Submitting...' : 'Submit Comment'}
             </SubmitButton>
           </CommentForm>
         </CommentsContainer>

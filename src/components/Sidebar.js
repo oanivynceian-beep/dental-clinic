@@ -1,6 +1,7 @@
 import React from 'react';
 import styled from 'styled-components';
 import { LayoutDashboard, CalendarCheck, Clock, MessageSquare } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 import logo from '../logo.png';
 
 // Fallback for logo if it doesn't exist
@@ -73,16 +74,28 @@ const SidebarItem = styled.div`
   }
 `;
 
-const AdminSidebar = ({ activeIndex = 0 }) => (
-  <SidebarContainer>
-    <SidebarLogo>
-      <img src={logo} alt="Clinic Logo" />
-    </SidebarLogo>
-    <SidebarItem $active={activeIndex === 0}><LayoutDashboard size={28} /></SidebarItem>
-    <SidebarItem $active={activeIndex === 1}><CalendarCheck size={28} /></SidebarItem>
-    <SidebarItem $active={activeIndex === 2}><Clock size={28} /></SidebarItem>
-    <SidebarItem $active={activeIndex === 3}><MessageSquare size={28} /></SidebarItem>
-  </SidebarContainer>
-);
+const AdminSidebar = ({ activeIndex = 0 }) => {
+  const navigate = useNavigate();
+
+  return (
+    <SidebarContainer>
+      <SidebarLogo>
+        <img src={logo} alt="Clinic Logo" />
+      </SidebarLogo>
+      <SidebarItem $active={activeIndex === 0} onClick={() => navigate('/admin')}>
+        <LayoutDashboard size={28} />
+      </SidebarItem>
+      <SidebarItem $active={activeIndex === 1} onClick={() => navigate('/admin/calendar')}>
+        <CalendarCheck size={28} />
+      </SidebarItem>
+      <SidebarItem $active={activeIndex === 2}>
+        <Clock size={28} />
+      </SidebarItem>
+      <SidebarItem $active={activeIndex === 3} onClick={() => navigate('/admin/comments')}>
+        <MessageSquare size={28} />
+      </SidebarItem>
+    </SidebarContainer>
+  );
+};
 
 export default AdminSidebar;
