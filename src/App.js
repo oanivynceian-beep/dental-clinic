@@ -10,6 +10,7 @@ import BookNow from './pages/Book';
 import Admin from './pages/Admin';
 import AdminComments from './pages/AdminComments';
 import AdminCalendar from './pages/AdminCalendar';
+import AdminStats from './pages/AdminStats';
 
 function App() {
   return (
@@ -25,6 +26,7 @@ function App() {
         <Route path="/admin" element={<Admin/>}/>
         <Route path="/admin/calendar" element={<AdminCalendar/>}/>
         <Route path="/admin/comments" element={<AdminComments/>}/>
+        <Route path="/admin/stats" element={<AdminStats/>}/>
  </Routes>
  </Router>
  );

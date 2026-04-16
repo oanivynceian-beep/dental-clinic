@@ -180,10 +180,9 @@ const Landing = () => {
   return (
     <Container>
       <TopNav>
-        <BrandText>DR. A DENTAL CLINIC</BrandText>
+        <BrandText></BrandText>
         <RightNav>
           <Tagline>“Your Smile, Our Passion”</Tagline>
-          <InquireButton to="/home">Inquire Now</InquireButton>
         </RightNav>
       </TopNav>
 
@@ -209,6 +208,15 @@ const Landing = () => {
           Grounded in<br />
           Compassionate Care
         </Heading>
+
+        <motion.div
+           initial={{ opacity: 0, y: 20 }}
+           animate={{ opacity: 1, y: 0 }}
+           transition={{ duration: 0.8, delay: 0.5 }}
+           style={{ marginTop: '20px' }}
+        >
+            <InquireButton to="/home">Inquire Now</InquireButton>
+        </motion.div>
 
         <PartnerSection
           initial={{ opacity: 0 }}
