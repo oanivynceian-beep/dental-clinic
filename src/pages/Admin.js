@@ -378,6 +378,12 @@ const formatBookingDate = (dateString) => {
   });
 };
 
+const ACCOUNTS = {
+  'admin123': 'superadmin',
+  'matina123': 'matina',
+  'sasa123': 'sasa'
+};
+
 const Admin = () => {
   const [activeTab, setActiveTab] = useState('Online Bookings');
   const [bookings, setBookings] = useState([]);
@@ -407,12 +413,6 @@ const Admin = () => {
   useEffect(() => {
     setTimeout(checkScrollPosition, 100);
   }, [bookings, activeTab, docLimit]);
-
-  const ACCOUNTS = {
-    'admin123': 'superadmin',
-    'matina123': 'matina',
-    'sasa123': 'sasa'
-  };
 
   useEffect(() => {
     const savedAuth = sessionStorage.getItem('admin_auth');

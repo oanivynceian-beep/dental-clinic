@@ -345,6 +345,12 @@ const isSameDay = (date1, date2) => {
     date1.getDate() === date2.getDate();
 };
 
+const ACCOUNTS = {
+  'admin123': 'superadmin',
+  'matina123': 'matina',
+  'sasa123': 'sasa'
+};
+
 const AdminCalendar = () => {
   const [bookings, setBookings] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -358,12 +364,6 @@ const AdminCalendar = () => {
   const [currentDate, setCurrentDate] = useState(new Date());
   const [selectedDate, setSelectedDate] = useState(null);
   const [dayBookings, setDayBookings] = useState([]);
-
-  const ACCOUNTS = {
-    'admin123': 'superadmin',
-    'matina123': 'matina',
-    'sasa123': 'sasa'
-  };
 
   useEffect(() => {
     const savedAuth = sessionStorage.getItem('admin_auth');
