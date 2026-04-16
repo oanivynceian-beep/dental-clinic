@@ -155,7 +155,6 @@ const Footer = () => (
         <FooterNav>
           <FooterNavLink href="#">Home</FooterNavLink>
           <FooterNavLink href="#">Services</FooterNavLink>
-          <FooterNavLink href="#">Recent Activities</FooterNavLink>
         </FooterNav>
       </FooterColumn>
       <FooterColumn>
@@ -164,9 +163,9 @@ const Footer = () => (
           <Phone />
           <BranchInfo>
             <BranchName>Sasa Branch</BranchName>
-            <span>012345689 | 012345689</span>
+            <span>0960 484 2905</span>
             <BranchName>Matina Branch</BranchName>
-            <span>012345689 | 012345689</span>
+            <span>0968 415 3301</span>
           </BranchInfo>
         </ContactItem>
         <ContactItem>

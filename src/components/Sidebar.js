@@ -76,6 +76,7 @@ const SidebarItem = styled.div`
 
 const AdminSidebar = ({ activeIndex = 0 }) => {
   const navigate = useNavigate();
+  const isAdmin123 = sessionStorage.getItem('admin_auth') === 'admin123';
 
   return (
     <SidebarContainer>
@@ -91,9 +92,11 @@ const AdminSidebar = ({ activeIndex = 0 }) => {
       <SidebarItem $active={activeIndex === 2}>
         <Clock size={28} />
       </SidebarItem>
-      <SidebarItem $active={activeIndex === 3} onClick={() => navigate('/admin/comments')}>
-        <MessageSquare size={28} />
-      </SidebarItem>
+      {isAdmin123 && (
+        <SidebarItem $active={activeIndex === 3} onClick={() => navigate('/admin/comments')}>
+          <MessageSquare size={28} />
+        </SidebarItem>
+      )}
     </SidebarContainer>
   );
 };

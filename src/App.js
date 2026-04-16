@@ -1,6 +1,7 @@
 import React from 'react';
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import Home from './pages/Home';
+import Landing from './pages/Landing';
 import Services from './pages/Services';
 import KnowUs from './pages/KnowUs';
 import RecentActivities from './pages/RecentActivities';
@@ -14,7 +15,8 @@ function App() {
   return (
     <Router>
       <Routes>
-        <Route path="/" element={<Home />} />
+        <Route path="/" element={<Landing />} />
+        <Route path="/home" element={<Home />} />
         <Route path="/services" element={<Services />} />
         <Route path="/know-us" element={<KnowUs />} />
         <Route path="/recent-activities" element={<RecentActivities />} />

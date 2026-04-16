@@ -384,6 +384,7 @@ const Admin = () => {
   const [loading, setLoading] = useState(true);
   const [password, setPassword] = useState('');
   const [isAuthorized, setIsAuthorized] = useState(false);
+  const [adminRole, setAdminRole] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [loginError, setLoginError] = useState('');
   const [docLimit, setDocLimit] = useState(3);
@@ -407,11 +408,18 @@ const Admin = () => {
     setTimeout(checkScrollPosition, 100);
   }, [bookings, activeTab, docLimit]);
 
+  const ACCOUNTS = {
+    'admin123': 'superadmin',
+    'matina123': 'matina',
+    'sasa123': 'sasa'
+  };
+
   useEffect(() => {
     const savedAuth = sessionStorage.getItem('admin_auth');
-    if (savedAuth === 'admin123') {
+    if (savedAuth && ACCOUNTS[savedAuth]) {
       setIsAuthorized(true);
-      setPassword('admin123');
+      setPassword(savedAuth);
+      setAdminRole(ACCOUNTS[savedAuth]);
     }
   }, []);
 
@@ -451,10 +459,11 @@ const Admin = () => {
 
   const handleLogin = (e) => {
     e.preventDefault();
-    if (password === 'admin123') {
+    if (ACCOUNTS[password]) {
       setIsAuthorized(true);
+      setAdminRole(ACCOUNTS[password]);
       setLoginError('');
-      sessionStorage.setItem('admin_auth', 'admin123');
+      sessionStorage.setItem('admin_auth', password);
     } else {
       setLoginError('Incorrect password. Please try again.');
     }
@@ -576,7 +585,12 @@ const Admin = () => {
     }
   };
 
-  const filteredBookings = bookings.filter(b => {
+  const filteredRoleBookings = bookings.filter(b => {
+    if (adminRole === 'superadmin') return true;
+    return b.branch && b.branch.toLowerCase() === adminRole;
+  });
+
+  const filteredBookings = filteredRoleBookings.filter(b => {
     if (activeTab === 'Online Bookings') return true;
     if (activeTab === 'Pending') return b.status === 'pending';
     if (activeTab === 'Approved') return b.status === 'approved';
@@ -584,9 +598,9 @@ const Admin = () => {
   });
 
   const stats = [
-    { label: 'Bookings', value: bookings.length },
-    { label: 'Pendings', value: bookings.filter(b => b.status === 'pending').length },
-    { label: 'Approved', value: bookings.filter(b => b.status === 'approved').length },
+    { label: 'Bookings', value: filteredRoleBookings.length },
+    { label: 'Pendings', value: filteredRoleBookings.filter(b => b.status === 'pending').length },
+    { label: 'Approved', value: filteredRoleBookings.filter(b => b.status === 'approved').length },
     { label: 'Comments', value: commentsCount },
   ];
 

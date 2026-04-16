@@ -350,6 +350,7 @@ const AdminCalendar = () => {
   const [loading, setLoading] = useState(true);
   const [password, setPassword] = useState('');
   const [isAuthorized, setIsAuthorized] = useState(false);
+  const [adminRole, setAdminRole] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [loginError, setLoginError] = useState('');
   const navigate = useNavigate();
@@ -358,11 +359,18 @@ const AdminCalendar = () => {
   const [selectedDate, setSelectedDate] = useState(null);
   const [dayBookings, setDayBookings] = useState([]);
 
+  const ACCOUNTS = {
+    'admin123': 'superadmin',
+    'matina123': 'matina',
+    'sasa123': 'sasa'
+  };
+
   useEffect(() => {
     const savedAuth = sessionStorage.getItem('admin_auth');
-    if (savedAuth === 'admin123') {
+    if (savedAuth && ACCOUNTS[savedAuth]) {
       setIsAuthorized(true);
-      setPassword('admin123');
+      setPassword(savedAuth);
+      setAdminRole(ACCOUNTS[savedAuth]);
     }
   }, []);
 
@@ -396,10 +404,11 @@ const AdminCalendar = () => {
 
   const handleLogin = (e) => {
     e.preventDefault();
-    if (password === 'admin123') {
+    if (ACCOUNTS[password]) {
       setIsAuthorized(true);
+      setAdminRole(ACCOUNTS[password]);
       setLoginError('');
-      sessionStorage.setItem('admin_auth', 'admin123');
+      sessionStorage.setItem('admin_auth', password);
     } else {
       setLoginError('Incorrect password. Please try again.');
     }
@@ -424,8 +433,13 @@ const AdminCalendar = () => {
     setCurrentDate(new Date());
   };
 
+  const filteredBookings = bookings.filter(b => {
+    if (adminRole === 'superadmin') return true;
+    return b.branch && b.branch.toLowerCase() === adminRole;
+  });
+
   const openDayDetails = (dateObj) => {
-    const matchingBookings = bookings.filter(b => isSameDay(b.parsedDate, dateObj));
+    const matchingBookings = filteredBookings.filter(b => isSameDay(b.parsedDate, dateObj));
     if (matchingBookings.length > 0) {
       setSelectedDate(dateObj);
       setDayBookings(matchingBookings);
@@ -457,7 +471,7 @@ const AdminCalendar = () => {
     for (let day = 1; day <= daysInMonth; day++) {
       const cellDate = new Date(year, month, day);
       const isToday = isSameDay(cellDate, today);
-      const cellBookings = bookings.filter(b => isSameDay(b.parsedDate, cellDate));
+      const cellBookings = filteredBookings.filter(b => isSameDay(b.parsedDate, cellDate));
 
       calendarCells.push(
         <DayCell

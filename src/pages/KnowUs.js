@@ -1,8 +1,9 @@
 import { motion } from "framer-motion";
 import styled from 'styled-components';
 import Header from '../components/Header';
-import { Heart,Users } from 'lucide-react';
+import { Heart, Users } from 'lucide-react';
 import Footer from '../components/Footer';
+
 
 
 
@@ -203,23 +204,23 @@ const KnowUs = () => {
           <KnowUsTitle>Know us</KnowUsTitle>
           <KnowUsGrid>
             <KnowUsImageWrapper>
-              <KnowUsImage 
-                src="https://images.unsplash.com/photo-1606811971618-4486d14f3f99?auto=format&fit=crop&q=80&w=800" 
-                alt="Dental Care" 
+              <KnowUsImage
+                src="https://images.unsplash.com/photo-1606811971618-4486d14f3f99?auto=format&fit=crop&q=80&w=800"
+                alt="Dental Care"
                 referrerPolicy="no-referrer"
               />
             </KnowUsImageWrapper>
             <KnowUsImageWrapper>
-              <KnowUsImage 
-                src="https://images.unsplash.com/photo-1593022356769-11f762e25ed9?auto=format&fit=crop&q=80&w=800" 
-                alt="Dental Mirror" 
+              <KnowUsImage
+                src="https://images.unsplash.com/photo-1593022356769-11f762e25ed9?auto=format&fit=crop&q=80&w=800"
+                alt="Dental Mirror"
                 referrerPolicy="no-referrer"
               />
             </KnowUsImageWrapper>
             <KnowUsImageWrapper>
-              <KnowUsImage 
-                src="https://images.unsplash.com/photo-1597764650032-133adb96771f?auto=format&fit=crop&q=80&w=800" 
-                alt="Dentist and Child" 
+              <KnowUsImage
+                src="https://www.universitydentalchoice.ca/wp-content/uploads/2026/02/dentist-near-pleasantview.webp"
+                alt="Dentist and Child"
                 referrerPolicy="no-referrer"
               />
             </KnowUsImageWrapper>
@@ -250,43 +251,44 @@ const KnowUs = () => {
             transition={{ duration: 0.8, delay: 0.3 }}
           >
             <Paragraph>
-              We provide a wide range of necessary dental services as a patient-centered dental facility. 
+              We provide a wide range of necessary dental services as a patient-centered dental facility.
               with state-of-the-art diagnostics such as dental CT scans and x-rays, and sophisticated technology.
             </Paragraph>
             <Paragraph>
-              For customers of all ages, we offer emergency dental care, providing timely care when you need it most. 
-              Our highly skilled dental team, which competes globally, is prepared to offer you outstanding care 
-              that is customized to meet your needs. All of our patients will benefit from increased accessibility 
+              For customers of all ages, we offer emergency dental care, providing timely care when you need it most.
+              Our highly skilled dental team, which competes globally, is prepared to offer you outstanding care
+              that is customized to meet your needs. All of our patients will benefit from increased accessibility
               and convenience thanks to our scalable model.
             </Paragraph>
             <ActionButton
               whileHover={{ scale: 1.05 }}
               whileTap={{ scale: 0.95 }}
+              onClick={() => window.open('https://www.facebook.com/dr.ayannadentalclinic', '_blank')}
             >
               Learn More
             </ActionButton>
           </TextBlock>
-           <TeamBanner
-          initial={{ x: -100, opacity: 0 }}
-          whileInView={{ x: 0, opacity: 1 }}
-          viewport={{ once: false }}
-          transition={{ duration: 0.8, ease: "easeOut" }}
-        >
-          <h2>Get to Know Our Team</h2>
-        </TeamBanner>
+          <TeamBanner
+            initial={{ x: -100, opacity: 0 }}
+            whileInView={{ x: 0, opacity: 1 }}
+            viewport={{ once: false }}
+            transition={{ duration: 0.8, ease: "easeOut" }}
+          >
+            <h2>Get to Know Our Team</h2>
+          </TeamBanner>
         </ContentSection>
-           <TeamSection>
-        <LargeTeamIcon
-          initial={{ opacity: 0, scale: 0.8 }}
-          whileInView={{ opacity: 1, scale: 1 }}
-          viewport={{ once: false }}
-          transition={{ duration: 0.8 }}
-        >
-          <Users strokeWidth={1.5} />
-        </LargeTeamIcon>
+        <TeamSection>
+          <LargeTeamIcon
+            initial={{ opacity: 0, scale: 0.8 }}
+            whileInView={{ opacity: 1, scale: 1 }}
+            viewport={{ once: false }}
+            transition={{ duration: 0.8 }}
+          >
+            <Users strokeWidth={1.5} />
+          </LargeTeamIcon>
 
-      
-      </TeamSection>
+
+        </TeamSection>
       </PageContainerAnimated>
       <Footer />
     </>
