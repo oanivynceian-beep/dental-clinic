@@ -127,6 +127,7 @@ const StyledInput = styled.input`
   border: 2px solid #f0f0f0;
   border-radius: 16px;
   outline: none;
+  font-family: inherit;
   font-size: 1rem;
   color: #4a3728;
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
@@ -274,6 +275,7 @@ const StyledTextArea = styled.textarea`
   border: 2px solid #f0f0f0;
   border-radius: 16px;
   outline: none;
+  font-family: inherit;
   font-size: 1rem;
   color: #4a3728;
   min-height: 120px;
@@ -701,7 +703,7 @@ const CustomCalendar = ({ value, onChange, blockedDates = [], bookingCounts = {}
     const blockedStyle = adminBlocked || atCap
       ? { background: adminBlocked ? 'rgba(244,67,54,0.08)' : 'rgba(255,152,0,0.08)', color: adminBlocked ? '#ef9a9a' : '#ffb74d' }
       : {};
-    const showBadge = showAvailability && !isPastDate(d) && !adminBlocked;
+    const showBadge = showAvailability && !isPastDate(d);
     cells.push(
       <DayCell
         key={d}
@@ -721,11 +723,11 @@ const CustomCalendar = ({ value, onChange, blockedDates = [], bookingCounts = {}
         {d}
         {showBadge && (
           <SlotBadge
-            $full={remaining === 0}
-            $low={remaining > 0 && remaining <= Math.max(2, Math.ceil(effectiveCap * 0.3))}
+            $full={remaining === 0 || adminBlocked}
+            $low={remaining > 0 && remaining <= Math.max(2, Math.ceil(effectiveCap * 0.3)) && !adminBlocked}
             $selected={selected}
           >
-            {remaining === 0 ? 'Full' : `${remaining} left`}
+           {adminBlocked ? 'Closed' : remaining === 0 ? 'Full' : `${remaining} left`}
           </SlotBadge>
         )}
       </DayCell>
