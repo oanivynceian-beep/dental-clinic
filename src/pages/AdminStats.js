@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import styled from 'styled-components';
 import { motion } from "framer-motion";
-import { Loader2, Lock, LogIn, Eye, EyeOff, ChevronDown } from 'lucide-react';
+import { Loader2, Lock, LogIn, Eye, EyeOff, ChevronDown, MapPin, Calendar, BarChart3, LineChart, PieChart } from 'lucide-react';
 import { db } from './firebase';
 import { collection, onSnapshot, query, orderBy } from 'firebase/firestore';
 import { useNavigate } from 'react-router-dom';
@@ -131,6 +131,9 @@ const CustomOption = styled.div`
   background: ${props => props.$selected ? '#4a3728' : 'white'};
   cursor: pointer;
   transition: all 0.2s;
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
 
   &:hover {
     background: ${props => props.$selected ? '#4a3728' : '#fcfaf9'};
@@ -157,7 +160,10 @@ const CustomDropdown = ({ value, options, onChange }) => {
   return (
     <CustomSelectContainer ref={dropdownRef}>
       <CustomSelectedValue onClick={() => setIsOpen(!isOpen)}>
-        {selectedOption ? selectedOption.label : value}
+        <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+          {selectedOption?.icon && <selectedOption.icon size={20} color="#4a3728" />}
+          {selectedOption ? selectedOption.label : value}
+        </div>
         <ChevronDown
           size={20}
           style={{ transform: isOpen ? 'rotate(180deg)' : 'rotate(0deg)', transition: 'transform 0.3s cubic-bezier(0.4, 0, 0.2, 1)' }}
@@ -179,6 +185,7 @@ const CustomDropdown = ({ value, options, onChange }) => {
                 setIsOpen(false);
               }}
             >
+              {opt.icon && <opt.icon size={20} color={value === opt.value ? '#fff' : '#4a3728'} />}
               {opt.label}
             </CustomOption>
           ))}
@@ -350,6 +357,25 @@ const AdminStats = () => {
     navigate('/');
   };
 
+  // Generate an array of years dynamically based on available bookings
+  const availableYears = React.useMemo(() => {
+    const years = new Set();
+    bookings.forEach(booking => {
+      if (booking.date) {
+        const year = booking.date.split('-')[0];
+        if (year) years.add(year);
+      }
+    });
+    
+    const sortedYears = Array.from(years).sort((a, b) => b.localeCompare(a));
+    
+    if (sortedYears.length === 0) {
+      return [new Date().getFullYear().toString()];
+    }
+    
+    return sortedYears;
+  }, [bookings]);
+
   if (!isAuthorized) {
     return (
       <LoginContainer>
@@ -516,10 +542,6 @@ const AdminStats = () => {
     }
   };
 
-  // Generate an array of years from the current year down to maybe 5 years ago
-  const currentYear = new Date().getFullYear();
-  const availableYears = Array.from(new Array(5), (val, index) => (currentYear - index).toString());
-
   return (
     <AdminContainer>
       <AdminSidebar activeIndex={4} />
@@ -562,23 +584,23 @@ const AdminStats = () => {
               <CustomDropdown
                 value={selectedBranch}
                 options={[
-                  { value: 'all', label: 'All Branches' },
-                  { value: 'matina', label: 'Matina Branch' },
-                  { value: 'sasa', label: 'Sasa Branch' }
+                  { value: 'all', label: 'All Branches', icon: MapPin },
+                  { value: 'matina', label: 'Matina Branch', icon: MapPin },
+                  { value: 'sasa', label: 'Sasa Branch', icon: MapPin }
                 ]}
                 onChange={setSelectedBranch}
               />
               <CustomDropdown
                 value={selectedYear}
-                options={availableYears.map(year => ({ value: year, label: `Year ${year}` }))}
+                options={availableYears.map(year => ({ value: year, label: `Year ${year}`, icon: Calendar }))}
                 onChange={setSelectedYear}
               />
               <CustomDropdown
                 value={chartType}
                 options={[
-                  { value: 'bar', label: 'Bar Graph' },
-                  { value: 'line', label: 'Line Graph' },
-                  { value: 'doughnut', label: 'Doughnut Chart' }
+                  { value: 'bar', label: 'Bar Graph', icon: BarChart3 },
+                  { value: 'line', label: 'Line Graph', icon: LineChart },
+                  { value: 'doughnut', label: 'Doughnut Chart', icon: PieChart }
                 ]}
                 onChange={setChartType}
               />

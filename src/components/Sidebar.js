@@ -1,6 +1,6 @@
 import React from 'react';
 import styled from 'styled-components';
-import { LayoutDashboard, CalendarCheck, MessageSquare, BarChart2 } from 'lucide-react';
+import { LayoutDashboard, CalendarCheck, MessageSquare, BarChart2, Settings2 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import logo from '../logo.png';
 
@@ -92,6 +92,9 @@ const AdminSidebar = ({ activeIndex = 0 }) => {
 
       {isAdmin123 && (
         <>
+          <SidebarItem $active={activeIndex === 2} onClick={() => navigate('/admin/calendar-settings')}>
+            <Settings2 size={28} />
+          </SidebarItem>
           <SidebarItem $active={activeIndex === 3} onClick={() => navigate('/admin/comments')}>
             <MessageSquare size={28} />
           </SidebarItem>

@@ -5,7 +5,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import Header from '../components/Header';
 import { User, Phone, MessageSquare, Mail, CheckCircle2, ArrowRight, Loader2, ChevronLeft, ChevronRight, ChevronDown, MapPin, X, Home, CalendarPlus } from 'lucide-react';
 import { db } from './firebase';
-import { collection, addDoc, serverTimestamp } from 'firebase/firestore';
+import { collection, addDoc, serverTimestamp, doc, onSnapshot, query } from 'firebase/firestore';
 
 const PageContainer = styled.div`
   min-height: 100vh;
@@ -560,7 +560,7 @@ const DayCell = styled.button`
     &::after {
       content: '';
       position: absolute;
-      bottom: 4px;
+      top: 4px;
       left: 50%;
       transform: translateX(-50%);
       width: 5px;
@@ -569,6 +569,29 @@ const DayCell = styled.button`
       background: #4a3728;
     }
   `}
+`;
+
+const SlotBadge = styled.span`
+  position: absolute;
+  bottom: 3px;
+  left: 50%;
+  transform: translateX(-50%);
+  font-size: 0.5rem;
+  font-weight: 800;
+  line-height: 1;
+  white-space: nowrap;
+  letter-spacing: -0.2px;
+  pointer-events: none;
+  color: ${
+    p => p.$selected ? 'rgba(255,255,255,0.8)' :
+    p.$full ? '#e53935' :
+    p.$low ? '#f57c00' :
+    '#388e3c'
+  };
+
+  @media (max-width: 480px) {
+    display: none;
+  }
 `;
 
 const SelectedDateChip = styled(motion.span)`
@@ -598,7 +621,7 @@ const MONTH_NAMES = [
 
 const DAY_LABELS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
 
-const CustomCalendar = ({ value, onChange }) => {
+const CustomCalendar = ({ value, onChange, blockedDates = [], bookingCounts = {}, maxPerDay = 10, dateCaps = {}, showAvailability = false }) => {
   const today = useMemo(() => {
     const d = new Date();
     d.setHours(0, 0, 0, 0);
@@ -628,6 +651,20 @@ const CustomCalendar = ({ value, onChange }) => {
     return cellDate < today;
   };
 
+  const isAdminBlocked = (day) => {
+    const key = `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+    return blockedDates.includes(key);
+  };
+
+  const isAtCapacity = (day) => {
+    const key = `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+    // Per-date cap overrides global cap
+    const effectiveCap = dateCaps[key] !== undefined ? dateCaps[key] : maxPerDay;
+    return (bookingCounts[key] || 0) >= effectiveCap;
+  };
+
+  const isDisabled = (day) => isPastDate(day) || isAdminBlocked(day) || isAtCapacity(day);
+
   const isToday = (day) => {
     return year === today.getFullYear() && month === today.getMonth() && day === today.getDate();
   };
@@ -653,16 +690,44 @@ const CustomCalendar = ({ value, onChange }) => {
     cells.push(<DayCell key={`empty-${i}`} $empty />);
   }
   for (let d = 1; d <= daysInMonth; d++) {
+    const key = `${year}-${String(month + 1).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
+    const effectiveCap = dateCaps[key] !== undefined ? dateCaps[key] : maxPerDay;
+    const used = bookingCounts[key] || 0;
+    const remaining = Math.max(0, effectiveCap - used);
+    const disabled = isDisabled(d);
+    const adminBlocked = isAdminBlocked(d);
+    const atCap = isAtCapacity(d);
+    const selected = isSelected(d);
+    const blockedStyle = adminBlocked || atCap
+      ? { background: adminBlocked ? 'rgba(244,67,54,0.08)' : 'rgba(255,152,0,0.08)', color: adminBlocked ? '#ef9a9a' : '#ffb74d' }
+      : {};
+    const showBadge = showAvailability && !isPastDate(d) && !adminBlocked;
     cells.push(
       <DayCell
         key={d}
         type="button"
-        $disabled={isPastDate(d)}
+        $disabled={disabled}
         $today={isToday(d)}
-        $selected={isSelected(d)}
-        onClick={() => handleSelect(d)}
+        $selected={selected}
+        onClick={() => !disabled && handleSelect(d)}
+        title={
+          adminBlocked ? 'Unavailable — blocked by clinic' :
+          atCap ? 'Fully booked for this day' :
+          showBadge ? `${remaining} spot${remaining !== 1 ? 's' : ''} remaining` :
+          undefined
+        }
+        style={blockedStyle}
       >
         {d}
+        {showBadge && (
+          <SlotBadge
+            $full={remaining === 0}
+            $low={remaining > 0 && remaining <= Math.max(2, Math.ceil(effectiveCap * 0.3))}
+            $selected={selected}
+          >
+            {remaining === 0 ? 'Full' : `${remaining} left`}
+          </SlotBadge>
+        )}
       </DayCell>
     );
   }
@@ -801,6 +866,54 @@ const BookNow = () => {
     date: '',
     reason: ''
   });
+
+  // Calendar availability settings — per branch
+  const [settingsSasa, setSettingsSasa] = useState({ blockedDates: [], maxReservationsPerDay: 10, dateCaps: {} });
+  const [settingsMatina, setSettingsMatina] = useState({ blockedDates: [], maxReservationsPerDay: 10, dateCaps: {} });
+  // Booking counts keyed by branch: { sasa: { 'YYYY-MM-DD': n }, matina: { ... } }
+  const [bookingCountsByBranch, setBookingCountsByBranch] = useState({ sasa: {}, matina: {} });
+
+  useEffect(() => {
+    // Fetch both branch settings from Firestore
+    const unsubSasa = onSnapshot(doc(db, 'calendarSettings', 'sasa'), snap => {
+      if (snap.exists()) {
+        const d = snap.data();
+        setSettingsSasa({
+          blockedDates: d.blockedDates || [],
+          maxReservationsPerDay: d.maxReservationsPerDay ?? 10,
+          dateCaps: d.dateCaps || {}
+        });
+      }
+    });
+    const unsubMatina = onSnapshot(doc(db, 'calendarSettings', 'matina'), snap => {
+      if (snap.exists()) {
+        const d = snap.data();
+        setSettingsMatina({
+          blockedDates: d.blockedDates || [],
+          maxReservationsPerDay: d.maxReservationsPerDay ?? 10,
+          dateCaps: d.dateCaps || {}
+        });
+      }
+    });
+
+    // Count bookings per branch per date (pending + approved only)
+    const unsubBookings = onSnapshot(query(collection(db, 'bookings')), snap => {
+      const counts = { sasa: {}, matina: {} };
+      snap.docs.forEach(d => {
+        const { date, status, branch } = d.data();
+        if (date && status !== 'cancelled' && (branch === 'sasa' || branch === 'matina')) {
+          counts[branch][date] = (counts[branch][date] || 0) + 1;
+        }
+      });
+      setBookingCountsByBranch(counts);
+    });
+
+    return () => {
+      unsubSasa();
+      unsubMatina();
+      unsubBookings();
+    };
+  }, []);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -981,6 +1094,11 @@ const BookNow = () => {
               <CustomCalendar
                 value={formData.date}
                 onChange={handleDateChange}
+                blockedDates={formData.branch ? (formData.branch === 'sasa' ? settingsSasa.blockedDates : settingsMatina.blockedDates) : []}
+                bookingCounts={formData.branch ? (bookingCountsByBranch[formData.branch] || {}) : {}}
+                maxPerDay={formData.branch ? (formData.branch === 'sasa' ? settingsSasa.maxReservationsPerDay : settingsMatina.maxReservationsPerDay) : 10}
+                dateCaps={formData.branch ? (formData.branch === 'sasa' ? settingsSasa.dateCaps : settingsMatina.dateCaps) : {}}
+                showAvailability={!!formData.branch}
               />
               {/* Hidden required input to enforce HTML validation */}
               <input

@@ -399,6 +399,7 @@ const Admin = () => {
   const [viewType, setViewType] = useState('slider');
   const [selectedBooking, setSelectedBooking] = useState(null);
   const [commentsCount, setCommentsCount] = useState(0);
+  const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
   const navigate = useNavigate();
   const sliderRef = useRef(null);
 
@@ -470,9 +471,14 @@ const Admin = () => {
   };
 
   const handleLogout = () => {
+    setShowLogoutConfirm(true);
+  };
+
+  const confirmLogout = () => {
     setIsAuthorized(false);
     setPassword('');
     sessionStorage.removeItem('admin_auth');
+    setShowLogoutConfirm(false);
     navigate('/');
   };
 
@@ -918,6 +924,51 @@ const Admin = () => {
           </ModalOverlay>
         )}
       </AnimatePresence>
+
+      <AnimatePresence>
+        {showLogoutConfirm && (
+          <ModalOverlay
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            onClick={() => setShowLogoutConfirm(false)}
+            style={{ zIndex: 2000 }}
+          >
+            <ModalContainer
+              initial={{ scale: 0.9, opacity: 0, y: 20 }}
+              animate={{ scale: 1, opacity: 1, y: 0 }}
+              exit={{ scale: 0.9, opacity: 0, y: 20 }}
+              onClick={e => e.stopPropagation()}
+              style={{ maxWidth: '400px', textAlign: 'center', padding: '3rem 2rem' }}
+            >
+              <h2 style={{ fontSize: '1.8rem', fontWeight: 900, color: '#4a3728', marginBottom: '1rem' }}>
+                Confirm Logout
+              </h2>
+              <p style={{ color: '#bcaaa4', fontWeight: 600, marginBottom: '2rem' }}>
+                Are you sure you want to log out of the dashboard?
+              </p>
+              
+              <div style={{ display: 'flex', gap: '1rem', justifyContent: 'center' }}>
+                <ActionButton 
+                  $variant="cancel" 
+                  onClick={() => setShowLogoutConfirm(false)}
+                  style={{ marginTop: 0, background: '#f5f5f5', color: '#4a3728' }}
+                >
+                  Cancel
+                </ActionButton>
+                <ActionButton 
+                  $variant="approve" 
+                  onClick={confirmLogout}
+                  style={{ marginTop: 0, background: '#4a3728' }}
+                >
+                  Logout
+                </ActionButton>
+              </div>
+            </ModalContainer>
+          </ModalOverlay>
+        )}
+      </AnimatePresence>
+
     </AdminContainer>
   );
 };

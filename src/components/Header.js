@@ -236,12 +236,12 @@ const Header = () => {
       </MenuButton>
 
       <NavLinks $isOpen={isOpen}>
-        <NavItem to="/" onClick={closeMenu} $active={location.pathname === "/"}>
+        <NavItem to="/home" onClick={closeMenu} $active={location.pathname === "/home"}>
           Home
         </NavItem>
 
         <NavItem to="/services" onClick={closeMenu} $active={location.pathname === "/services"}>
- 
+
         </NavItem>
 
         <NavItem to="/know-us" onClick={closeMenu} $active={location.pathname === "/know-us"}>
@@ -249,7 +249,7 @@ const Header = () => {
         </NavItem>
 
         <NavItem to="/recent-activities" onClick={closeMenu} $active={location.pathname === "/recent-activities"}>
-        
+
         </NavItem>
 
         <MobileButton>
