@@ -5,7 +5,10 @@ import { motion, AnimatePresence } from "framer-motion";
 import Header from '../components/Header';
 import { User, Phone, MessageSquare, Mail, CheckCircle2, ArrowRight, Loader2, ChevronLeft, ChevronRight, ChevronDown, MapPin, X, Home, CalendarPlus } from 'lucide-react';
 import { db } from './firebase';
-import { collection, addDoc, serverTimestamp, doc, onSnapshot, query } from 'firebase/firestore';
+import {
+  collection, addDoc, onSnapshot, query, doc,
+  serverTimestamp, orderBy
+} from 'firebase/firestore';
 
 const PageContainer = styled.div`
   min-height: 100vh;
@@ -154,29 +157,39 @@ const DropdownContainer = styled.div`
 
 const DropdownTrigger = styled.button`
   width: 100%;
-  padding: 1.25rem;
+  padding: 1rem 1.25rem;
   background: white;
-  border: 2px solid ${props => props.$isOpen ? '#4a3728' : '#f0f0f0'};
+  border: 2px solid ${props => (props.$isOpen ? '#4a3728' : '#f0f0f0')};
   border-radius: 16px;
   outline: none;
   font-size: 1rem;
-  color: ${props => props.$hasValue ? '#4a3728' : '#bcaaa4'};
+  font-weight: 600;
+  color: ${props => (props.$hasValue ? '#4a3728' : '#bcaaa4')};
   cursor: pointer;
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: 0.75rem;
   text-align: left;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.02), 0 2px 4px -1px rgba(0, 0, 0, 0.01);
 
   &:hover {
     border-color: #d7ccc8;
+    background: #fafafa;
   }
 
-  ${props => props.$isOpen && `
-    box-shadow: 0 0 0 4px rgba(74, 55, 40, 0.05);
-    transform: translateY(-2px);
+  ${props =>
+    props.$isOpen &&
+    `
+    box-shadow: 0 0 0 4px rgba(74, 55, 40, 0.08);
+    background: white;
   `}
+
+  @media (max-width: 768px) {
+    padding: 0.9rem 1.1rem;
+    font-size: 0.95rem;
+  }
 `;
 
 const DropdownTriggerLeft = styled.span`
@@ -200,42 +213,87 @@ const DropdownMenu = styled(motion.div)`
   left: 0;
   right: 0;
   background: white;
-  border: 2px solid #f0f0f0;
-  border-radius: 16px;
-  overflow: hidden;
-  z-index: 50;
-  box-shadow: 0 20px 40px rgba(74, 55, 40, 0.12), 0 4px 12px rgba(74, 55, 40, 0.06);
+  border: 2px solid #efefef;
+  border-radius: 20px;
+  overflow-y: auto;
+  max-height: 320px;
+  z-index: 100;
+  box-shadow: 0 20px 50px rgba(74, 55, 40, 0.15);
+  padding: 0.5rem;
+
+  &::-webkit-scrollbar {
+    width: 6px;
+  }
+  &::-webkit-scrollbar-thumb {
+    background: #e0d7d2;
+    border-radius: 10px;
+  }
+
+  @media (max-width: 768px) {
+    position: fixed;
+    top: auto;
+    bottom: 20px;
+    left: 15px;
+    right: 15px;
+    max-height: 50vh;
+    border-radius: 24px;
+  }
+`;
+
+const MobileOverlay = styled(motion.div)`
+  display: none;
+  @media (max-width: 768px) {
+    display: block;
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(74, 55, 40, 0.2);
+    backdrop-filter: blur(4px);
+    z-index: 90;
+  }
 `;
 
 const DropdownOption = styled.button`
   width: 100%;
-  padding: 1rem 1.25rem;
-  background: ${props => props.$isSelected ? 'rgba(74, 55, 40, 0.06)' : 'transparent'};
+  padding: 0.8rem 1rem;
+  background: ${props => (props.$isSelected ? '#faf8f6' : 'transparent')};
   border: none;
   outline: none;
-  font-size: 1rem;
+  font-size: 0.95rem;
+  font-weight: ${props => (props.$isSelected ? '700' : '500')};
   color: #4a3728;
   cursor: pointer;
   display: flex;
   align-items: center;
   gap: 0.85rem;
   text-align: left;
-  transition: all 0.15s ease;
+  transition: all 0.2s;
+  border-radius: 12px;
+  margin-bottom: 2px;
   position: relative;
 
   &:hover {
-    background: rgba(74, 55, 40, 0.08);
+    background: #f5f0ed;
+    transform: translateX(4px);
   }
 
-  &:not(:last-child)::after {
-    content: '';
-    position: absolute;
-    bottom: 0;
-    left: 1.25rem;
-    right: 1.25rem;
-    height: 1px;
-    background: #f5f0ed;
-  }
+  ${props =>
+    props.$isSelected &&
+    `
+    &::before {
+      content: '';
+      position: absolute;
+      left: 0;
+      top: 50%;
+      transform: translateY(-50%);
+      width: 4px;
+      height: 20px;
+      background: #4a3728;
+      border-radius: 0 4px 4px 0;
+    }
+  `}
 `;
 
 const OptionIcon = styled.span`
@@ -248,6 +306,16 @@ const OptionIcon = styled.span`
   background: ${props => props.$color || 'rgba(74, 55, 40, 0.06)'};
   color: ${props => props.$iconColor || '#4a3728'};
   flex-shrink: 0;
+`;
+
+const DropdownHeader = styled.div`
+  padding: 1rem 1.25rem 0.5rem;
+  font-size: 0.75rem;
+  font-weight: 800;
+  color: #a1887f;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  background: #fdfaf7;
 `;
 
 const OptionDetails = styled.div`
@@ -760,7 +828,7 @@ const CustomCalendar = ({ value, onChange, blockedDates = [], bookingCounts = {}
    Custom Dropdown Component
 ======================== */
 
-const CustomDropdown = ({ value, onChange, placeholder, options }) => {
+const CustomDropdown = ({ value, onChange, placeholder, options, icon: IconComponent = MapPin }) => {
   const [isOpen, setIsOpen] = useState(false);
   const containerRef = useRef(null);
 
@@ -789,68 +857,84 @@ const CustomDropdown = ({ value, onChange, placeholder, options }) => {
           {selectedOption ? (
             <>
               <OptionIcon $color={selectedOption.color} $iconColor={selectedOption.iconColor}>
-                <MapPin size={16} />
+                <IconComponent size={18} />
               </OptionIcon>
               <OptionDetails>
                 <OptionLabel>{selectedOption.label}</OptionLabel>
-                <OptionSub>{selectedOption.sub}</OptionSub>
+                {selectedOption.sub && <OptionSub>{selectedOption.sub}</OptionSub>}
               </OptionDetails>
             </>
           ) : (
-            placeholder
+            <span style={{ fontWeight: 500, marginLeft: '0.25rem' }}>{placeholder}</span>
           )}
         </DropdownTriggerLeft>
         <DropdownChevron
           animate={{ rotate: isOpen ? 180 : 0 }}
-          transition={{ duration: 0.25 }}
+          transition={{ duration: 0.3, cubicBezier: [0.4, 0, 0.2, 1] }}
         >
-          <ChevronDown size={18} />
+          <ChevronDown size={20} />
         </DropdownChevron>
       </DropdownTrigger>
 
       <AnimatePresence>
         {isOpen && (
-          <DropdownMenu
-            initial={{ opacity: 0, y: -8, scaleY: 0.95 }}
-            animate={{ opacity: 1, y: 0, scaleY: 1 }}
-            exit={{ opacity: 0, y: -8, scaleY: 0.95 }}
-            transition={{ duration: 0.2, ease: [0.4, 0, 0.2, 1] }}
-            style={{ transformOrigin: 'top center' }}
-          >
-            {options.map((opt) => (
-              <DropdownOption
-                key={opt.value}
-                type="button"
-                $isSelected={value === opt.value}
-                onClick={() => {
-                  onChange(opt.value);
-                  setIsOpen(false);
-                }}
-              >
-                <OptionIcon $color={opt.color} $iconColor={opt.iconColor}>
-                  <MapPin size={16} />
-                </OptionIcon>
-                <OptionDetails>
-                  <OptionLabel>{opt.label}</OptionLabel>
-                  <OptionSub>{opt.sub}</OptionSub>
-                </OptionDetails>
-                {value === opt.value && (
-                  <motion.span
-                    initial={{ scale: 0 }}
-                    animate={{ scale: 1 }}
-                    style={{ marginLeft: 'auto', color: '#4a3728' }}
+          <>
+            <MobileOverlay
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              onClick={() => setIsOpen(false)}
+            />
+            <DropdownMenu
+              initial={{ opacity: 0, y: 10, scale: 0.95 }}
+              animate={{ opacity: 1, y: 0, scale: 1 }}
+              exit={{ opacity: 0, y: 10, scale: 0.95 }}
+              transition={{ duration: 0.2, cubicBezier: [0.4, 0, 0.2, 1] }}
+            >
+            <div style={{ maxHeight: '300px', overflowY: 'auto' }}>
+              {options.map((opt) => {
+                if (opt.isHeader) {
+                  return <DropdownHeader key={opt.value}>{opt.label}</DropdownHeader>;
+                }
+                return (
+                  <DropdownOption
+                    key={opt.value}
+                    type="button"
+                    $isSelected={value === opt.value}
+                    onClick={() => {
+                      onChange(opt.value);
+                      setIsOpen(false);
+                    }}
                   >
-                    <CheckCircle2 size={18} />
-                  </motion.span>
-                )}
-              </DropdownOption>
-            ))}
-          </DropdownMenu>
+                    <OptionIcon $color={opt.color} $iconColor={opt.iconColor}>
+                      <IconComponent size={16} />
+                    </OptionIcon>
+                    <OptionDetails>
+                      <OptionLabel>{opt.label}</OptionLabel>
+                      {opt.sub && <OptionSub>{opt.sub}</OptionSub>}
+                    </OptionDetails>
+                    {value === opt.value && (
+                      <motion.span
+                        initial={{ scale: 0 }}
+                        animate={{ scale: 1 }}
+                        style={{ marginLeft: 'auto', color: '#4a3728' }}
+                      >
+                        <CheckCircle2 size={18} />
+                      </motion.span>
+                    )}
+                  </DropdownOption>
+                );
+              })}
+            </div>
+            </DropdownMenu>
+          </>
         )}
       </AnimatePresence>
     </DropdownContainer>
   );
 };
+
+// Services will be fetched from Firestore
 
 /* ========================
    Main BookNow Component
@@ -866,12 +950,14 @@ const BookNow = () => {
     phone: '',
     branch: '',
     date: '',
-    reason: ''
+    reason: '',
+    customReason: ''
   });
 
   // Calendar availability settings — per branch
-  const [settingsSasa, setSettingsSasa] = useState({ blockedDates: [], maxReservationsPerDay: 10, dateCaps: {} });
-  const [settingsMatina, setSettingsMatina] = useState({ blockedDates: [], maxReservationsPerDay: 10, dateCaps: {} });
+  const [settingsSasa, setSettingsSasa] = useState({ blockedDates: [], maxReservationsPerDay: 10, dateCaps: {}, disabledServicesByDate: {} });
+  const [settingsMatina, setSettingsMatina] = useState({ blockedDates: [], maxReservationsPerDay: 10, dateCaps: {}, disabledServicesByDate: {} });
+  const [globalServices, setGlobalServices] = useState({ major: [], minor: [] });
   // Booking counts keyed by branch: { sasa: { 'YYYY-MM-DD': n }, matina: { ... } }
   const [bookingCountsByBranch, setBookingCountsByBranch] = useState({ sasa: {}, matina: {} });
 
@@ -883,7 +969,8 @@ const BookNow = () => {
         setSettingsSasa({
           blockedDates: d.blockedDates || [],
           maxReservationsPerDay: d.maxReservationsPerDay ?? 10,
-          dateCaps: d.dateCaps || {}
+          dateCaps: d.dateCaps || {},
+          disabledServicesByDate: d.disabledServicesByDate || {}
         });
       }
     });
@@ -893,9 +980,18 @@ const BookNow = () => {
         setSettingsMatina({
           blockedDates: d.blockedDates || [],
           maxReservationsPerDay: d.maxReservationsPerDay ?? 10,
-          dateCaps: d.dateCaps || {}
+          dateCaps: d.dateCaps || {},
+          disabledServicesByDate: d.disabledServicesByDate || {}
         });
       }
+    });
+
+    const unsubServices = onSnapshot(query(collection(db, 'services'), orderBy('name', 'asc')), snap => {
+      const svs = snap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+      setGlobalServices({
+        major: svs.filter(s => s.type === 'major').map(s => ({ value: s.name, label: s.name, id: s.id })),
+        minor: svs.filter(s => s.type === 'minor').map(s => ({ value: s.name, label: s.name, id: s.id }))
+      });
     });
 
     // Count bookings per branch per date (pending + approved only)
@@ -914,8 +1010,21 @@ const BookNow = () => {
       unsubSasa();
       unsubMatina();
       unsubBookings();
+      unsubServices();
     };
   }, []);
+
+  const availableServices = useMemo(() => {
+    const settings = formData.branch === 'sasa' ? settingsSasa : settingsMatina;
+    const disabledIds = settings.disabledServicesByDate?.[formData.date] || [];
+
+    const other = { value: 'Other', label: 'Other (Please specify)' };
+
+    return {
+      major: [...globalServices.major.filter(s => !disabledIds.includes(s.id)), other],
+      minor: [...globalServices.minor.filter(s => !disabledIds.includes(s.id)), other]
+    };
+  }, [formData.branch, formData.date, globalServices, settingsSasa, settingsMatina]);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -930,8 +1039,15 @@ const BookNow = () => {
     e.preventDefault();
     setIsLoading(true);
     try {
+      const submissionData = { ...formData };
+      if (submissionData.reason === 'Other') {
+        submissionData.reason = submissionData.customReason;
+      }
+      // Remove customReason before saving to DB
+      delete submissionData.customReason;
+
       await addDoc(collection(db, 'bookings'), {
-        ...formData,
+        ...submissionData,
         status: 'pending',
         createdAt: serverTimestamp()
       });
@@ -956,7 +1072,8 @@ const BookNow = () => {
       phone: '',
       branch: '',
       date: '',
-      reason: ''
+      reason: '',
+      customReason: ''
     });
   };
 
@@ -1115,12 +1232,67 @@ const BookNow = () => {
 
             <FormGroup>
               <Label><MessageSquare size={16} /> Reason for Visit</Label>
-              <StyledTextArea
-                name="reason"
+              <FormGrid>
+                <FormGroup style={{ marginBottom: 0 }}>
+                  <Label style={{ fontSize: '0.8rem', color: '#a1887f' }}>Major Services</Label>
+                  <CustomDropdown
+                    value={availableServices.major.some(s => s.value === formData.reason) ? formData.reason : ''}
+                    onChange={(val) => setFormData(prev => ({ ...prev, reason: val }))}
+                    placeholder="Select Major Service"
+                    options={availableServices.major.map(opt => ({
+                      ...opt,
+                      color: 'rgba(74, 55, 40, 0.06)',
+                      iconColor: '#4a3728'
+                    }))}
+                    icon={MessageSquare}
+                  />
+                </FormGroup>
+                <FormGroup style={{ marginBottom: 0 }}>
+                  <Label style={{ fontSize: '0.8rem', color: '#a1887f' }}>Minor Services</Label>
+                  <CustomDropdown
+                    value={availableServices.minor.some(s => s.value === formData.reason) ? formData.reason : ''}
+                    onChange={(val) => setFormData(prev => ({ ...prev, reason: val }))}
+                    placeholder="Select Minor Service"
+                    options={availableServices.minor.map(opt => ({
+                      ...opt,
+                      color: 'rgba(74, 55, 40, 0.06)',
+                      iconColor: '#4a3728'
+                    }))}
+                    icon={MessageSquare}
+                  />
+                </FormGroup>
+              </FormGrid>
+              
+              {/* Hidden required input for validation */}
+              <input
+                type="text"
                 value={formData.reason}
-                onChange={handleChange}
-                placeholder="Tell us about your dental concern (e.g., Cleaning, Check-up, Braces)..."
+                required
+                style={{ position: 'absolute', opacity: 0, pointerEvents: 'none', height: 0 }}
+                tabIndex={-1}
+                onChange={() => { }}
               />
+
+              <AnimatePresence>
+                {formData.reason === 'Other' && (
+                  <motion.div
+                    initial={{ opacity: 0, height: 0 }}
+                    animate={{ opacity: 1, height: 'auto' }}
+                    exit={{ opacity: 0, height: 0 }}
+                    transition={{ duration: 0.3 }}
+                    style={{ marginTop: '1rem', overflow: 'hidden' }}
+                  >
+                    <Label style={{ fontSize: '0.85rem', marginBottom: '0.5rem' }}>Please specify your concern</Label>
+                    <StyledTextArea
+                      name="customReason"
+                      value={formData.customReason}
+                      onChange={handleChange}
+                      placeholder="Tell us about your dental concern..."
+                      required
+                    />
+                  </motion.div>
+                )}
+              </AnimatePresence>
             </FormGroup>
 
             <SubmitButton
@@ -1192,7 +1364,7 @@ const BookNow = () => {
                 {formData.reason && (
                   <SummaryRow>
                     <span>Reason</span>
-                    <span>{formData.reason}</span>
+                    <span>{formData.reason === 'Other' ? formData.customReason : formData.reason}</span>
                   </SummaryRow>
                 )}
               </ModalSummary>

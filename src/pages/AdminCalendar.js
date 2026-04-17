@@ -1,11 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import styled from 'styled-components';
 import { motion, AnimatePresence } from "framer-motion";
-import { ChevronRight, ChevronLeft, Loader2, Lock, LogIn, Eye, EyeOff, X } from 'lucide-react';
+import { ChevronRight, ChevronLeft, Loader2, Lock, LogIn, Eye, EyeOff, X, Mail, AlertCircle, CheckCircle2 } from 'lucide-react';
+import emailjs from '@emailjs/browser';
 import { db } from './firebase';
 import { collection, onSnapshot, query, orderBy } from 'firebase/firestore';
 import { useNavigate } from 'react-router-dom';
-
 import AdminSidebar from '../components/Sidebar';
 import logo3 from '../components/logo.png';
 
@@ -325,6 +325,36 @@ const LoginButton = styled.button`
     transform: translateY(-3px);
     box-shadow: 0 10px 20px rgba(74, 55, 40, 0.2);
   }
+
+  &:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+    transform: none;
+  }
+`;
+
+const Toast = styled(motion.div)`
+  position: fixed;
+  bottom: 2rem;
+  right: 2rem;
+  background: ${p => p.$error ? '#f44336' : '#4a3728'};
+  color: white;
+  padding: 1.25rem 1.75rem;
+  border-radius: 20px;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  z-index: 2000;
+  box-shadow: 0 10px 30px rgba(0,0,0,0.15);
+  max-width: 400px;
+
+  @media (max-width: 768px) {
+    bottom: 1rem;
+    right: 1rem;
+    left: 1rem;
+    max-width: none;
+  }
 `;
 
 const DAYS_OF_WEEK = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
@@ -364,6 +394,8 @@ const AdminCalendar = () => {
   const [currentDate, setCurrentDate] = useState(new Date());
   const [selectedDate, setSelectedDate] = useState(null);
   const [dayBookings, setDayBookings] = useState([]);
+  const [isSendingReminders, setIsSendingReminders] = useState(false);
+  const [toast, setToast] = useState(null);
 
   useEffect(() => {
     const savedAuth = sessionStorage.getItem('admin_auth');
@@ -443,6 +475,67 @@ const AdminCalendar = () => {
     if (matchingBookings.length > 0) {
       setSelectedDate(dateObj);
       setDayBookings(matchingBookings);
+    }
+  };
+
+  const showToast = (msg, error = false) => {
+    setToast({ msg, error });
+    setTimeout(() => setToast(null), 4000);
+  };
+
+  const sendReminderEmails = async () => {
+    if (!selectedDate || dayBookings.length === 0) return;
+    
+    setIsSendingReminders(true);
+    try {
+      // Format date
+      const appointmentDate = selectedDate.toLocaleDateString('en-US', {
+        weekday: 'long',
+        month: 'long',
+        day: 'numeric',
+        year: 'numeric'
+      });
+
+      let sentCount = 0;
+
+      // Send email to each patient
+      for (const booking of dayBookings) {
+        try {
+          const templateParams = {
+            email: booking.email,
+            name: booking.fullName,
+            appointment_date: appointmentDate,
+            service_type: booking.reason || 'General Check-up',
+            branch: booking.branch.charAt(0).toUpperCase() + booking.branch.slice(1),
+            phone: booking.phone,
+            message: `Dear ${booking.fullName}, this is a reminder that you have an appointment scheduled on ${appointmentDate} for ${booking.reason || 'a general check-up'} at our ${booking.branch} branch. Please arrive 10 minutes early. If you need to reschedule, please contact us at your earliest convenience.`
+          };
+
+          await emailjs.send(
+            'service_bo0rrjf',
+            'template_dtn7txm',
+            templateParams,
+            {
+              publicKey: 'igsa6b4JaCPQxbNFE',
+            }
+          );
+
+          sentCount++;
+        } catch (error) {
+          console.error(`Failed to send email to ${booking.email}:`, error);
+        }
+      }
+
+      if (sentCount > 0) {
+        showToast(`✓ Reminder emails sent to ${sentCount} patient${sentCount !== 1 ? 's' : ''}!`);
+      } else {
+        showToast(`Failed to send reminders to all patients. Please try again.`, true);
+      }
+    } catch (error) {
+      console.error('Error sending reminders:', error);
+      showToast('Error sending reminder emails. Please try again.', true);
+    } finally {
+      setIsSendingReminders(false);
     }
   };
 
@@ -662,9 +755,28 @@ const AdminCalendar = () => {
                 <ModalTitle>
                   {new Intl.DateTimeFormat('en-US', { weekday: 'long', month: 'long', day: 'numeric' }).format(selectedDate)}
                 </ModalTitle>
-                <CloseButton onClick={() => setSelectedDate(null)}>
-                  <X size={24} />
-                </CloseButton>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+                  <LoginButton 
+                    onClick={sendReminderEmails} 
+                    disabled={isSendingReminders}
+                    style={{ padding: '0.75rem 1.5rem', fontSize: '0.95rem' }}
+                  >
+                    {isSendingReminders ? (
+                      <>
+                        <Loader2 size={18} style={{ animation: 'spin 1s linear infinite' }} />
+                        Sending...
+                      </>
+                    ) : (
+                      <>
+                        <Mail size={18} />
+                        Send Reminders
+                      </>
+                    )}
+                  </LoginButton>
+                  <CloseButton onClick={() => setSelectedDate(null)}>
+                    <X size={24} />
+                  </CloseButton>
+                </div>
               </ModalHeader>
 
               <ModalBody>
@@ -706,6 +818,20 @@ const AdminCalendar = () => {
               </ModalBody>
             </ModalContainer>
           </ModalOverlay>
+        )}
+      </AnimatePresence>
+
+      <AnimatePresence>
+        {toast && (
+          <Toast 
+            $error={toast.error} 
+            initial={{ opacity: 0, y: 50 }} 
+            animate={{ opacity: 1, y: 0 }} 
+            exit={{ opacity: 0, y: 50 }}
+          >
+            {toast.error ? <AlertCircle size={20} /> : <CheckCircle2 size={20} />}
+            {toast.msg}
+          </Toast>
         )}
       </AnimatePresence>
 

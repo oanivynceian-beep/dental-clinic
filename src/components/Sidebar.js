@@ -1,6 +1,6 @@
 import React from 'react';
 import styled from 'styled-components';
-import { LayoutDashboard, CalendarCheck, MessageSquare, BarChart2, Settings2 } from 'lucide-react';
+import { LayoutDashboard, CalendarCheck, MessageSquare, BarChart2, Settings2, Stethoscope } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import logo from '../logo.png';
 
@@ -100,6 +100,9 @@ const AdminSidebar = ({ activeIndex = 0 }) => {
           </SidebarItem>
           <SidebarItem $active={activeIndex === 4} onClick={() => navigate('/admin/stats')}>
             <BarChart2 size={28} />
+          </SidebarItem>
+          <SidebarItem $active={activeIndex === 5} onClick={() => navigate('/admin/services')}>
+            <Stethoscope size={28} />
           </SidebarItem>
         </>
       )}

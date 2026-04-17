@@ -12,6 +12,7 @@ import AdminComments from './pages/AdminComments';
 import AdminCalendar from './pages/AdminCalendar';
 import AdminStats from './pages/AdminStats';
 import AdminCalendarSettings from './pages/AdminCalendarSettings';
+import AdminServices from './pages/AdminServices';
 
 function App() {
   return (
@@ -29,6 +30,7 @@ function App() {
         <Route path="/admin/comments" element={<AdminComments/>}/>
         <Route path="/admin/stats" element={<AdminStats/>}/>
         <Route path="/admin/calendar-settings" element={<AdminCalendarSettings/>}/>
+        <Route path="/admin/services" element={<AdminServices/>}/>
  </Routes>
  </Router>
  );
