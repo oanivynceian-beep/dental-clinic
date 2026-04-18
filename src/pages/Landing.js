@@ -1,7 +1,8 @@
-import React from 'react';
-import styled from 'styled-components';
-import { motion } from 'framer-motion';
-import { Link } from 'react-router-dom';
+import React from "react";
+import styled from "styled-components";
+import { motion } from "framer-motion";
+import { Link } from "react-router-dom";
+import logo from "./hcdc logo type (1).png";
 
 const Container = styled.div`
   display: flex;
@@ -34,7 +35,7 @@ const TopNav = styled.div`
     padding: 20px;
     flex-direction: column;
     gap: 15px;
-    background: rgba(255,255,255,0.9);
+    background: rgba(255, 255, 255, 0.9);
   }
 `;
 
@@ -80,7 +81,7 @@ const InquireButton = styled(Link)`
 const LeftPane = styled.div`
   flex: 1;
   position: relative;
-  background-image: url('https://images.unsplash.com/photo-1606811841689-23dfddce3e95?auto=format&fit=crop&q=80&w=1000');
+  background-image: url("https://images.unsplash.com/photo-1606811841689-23dfddce3e95?auto=format&fit=crop&q=80&w=1000");
   background-size: cover;
   background-position: center;
   display: flex;
@@ -88,7 +89,7 @@ const LeftPane = styled.div`
   justify-content: center;
 
   &::before {
-    content: '';
+    content: "";
     position: absolute;
     top: 0;
     left: 0;
@@ -119,7 +120,7 @@ const MainLogo = styled(motion.img)`
 
 const RightPane = styled.div`
   flex: 1;
-  background-color: #F8F5F2; /* Cream color */
+  background-color: #f8f5f2; /* Cream color */
   display: flex;
   flex-direction: column;
   justify-content: center;
@@ -193,7 +194,9 @@ const Landing = () => {
           initial={{ opacity: 0, scale: 0.9 }}
           animate={{ opacity: 1, scale: 1 }}
           transition={{ duration: 0.8, ease: "easeOut" }}
-          onError={(e) => { e.target.src = '/logo.png' }}
+          onError={(e) => {
+            e.target.src = "/logo.png";
+          }}
         />
       </LeftPane>
 
@@ -203,19 +206,22 @@ const Landing = () => {
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.8, delay: 0.3 }}
         >
-          Committed to<br />
-          Creating Smiles,<br />
-          Grounded in<br />
+          Committed to
+          <br />
+          Creating Smiles,
+          <br />
+          Grounded in
+          <br />
           Compassionate Care
         </Heading>
 
         <motion.div
-           initial={{ opacity: 0, y: 20 }}
-           animate={{ opacity: 1, y: 0 }}
-           transition={{ duration: 0.8, delay: 0.5 }}
-           style={{ marginTop: '20px' }}
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.8, delay: 0.5 }}
+          style={{ marginTop: "20px" }}
         >
-            <InquireButton to="/home">Inquire Now</InquireButton>
+          <InquireButton to="/home">Inquire Now</InquireButton>
         </motion.div>
 
         <PartnerSection
@@ -225,14 +231,21 @@ const Landing = () => {
         >
           <PartnerText>Official Partner/s:</PartnerText>
           <PartnerLogo
-            src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcS2G3kKpRfTXAxhO_sHkZ7QJVCOc9EQwBbmMg&s"
+            src={logo}
             alt="Holy Cross of Davao College"
             onError={(e) => {
-              e.target.style.display = 'none';
-              e.target.nextSibling.style.display = 'block';
+              e.target.style.display = "none";
+              e.target.nextSibling.style.display = "block";
             }}
           />
-          <div style={{ display: 'none', fontWeight: 'bold', color: '#880000', marginTop: '10px' }}>
+          <div
+            style={{
+              display: "none",
+              fontWeight: "bold",
+              color: "#880000",
+              marginTop: "10px",
+            }}
+          >
             HOLY CROSS OF DAVAO COLLEGE
           </div>
         </PartnerSection>
