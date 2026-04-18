@@ -1,7 +1,7 @@
-import React from 'react';
-import styled from 'styled-components';
-import { Phone, MapPin, Clock, Instagram, Facebook } from 'lucide-react';
-import logo3 from './logo3.png';
+import React from "react";
+import styled from "styled-components";
+import { Phone, MapPin, Clock, Instagram, Facebook } from "lucide-react";
+import logo3 from "./logo3.png";
 
 const FooterContainer = styled.footer`
   background-color: #4a3728;
@@ -146,15 +146,25 @@ const Footer = () => (
       <FooterColumn>
         <FooterTitle>Follow us</FooterTitle>
         <SocialLinks>
-          <SocialIcon href="https://www.facebook.com/dr.ayannadentalclinic" aria-label="Facebook"><Facebook size={20} /></SocialIcon>
-          <SocialIcon href="https://www.instagram.com/dr.adentalclinic" aria-label="Instagram"><Instagram size={20} /></SocialIcon>
+          <SocialIcon
+            href="https://www.facebook.com/dr.ayannadentalclinic"
+            aria-label="Facebook"
+          >
+            <Facebook size={20} />
+          </SocialIcon>
+          <SocialIcon
+            href="https://www.instagram.com/dr.adentalclinic"
+            aria-label="Instagram"
+          >
+            <Instagram size={20} />
+          </SocialIcon>
         </SocialLinks>
       </FooterColumn>
       <FooterColumn>
         <FooterTitle>Navigation</FooterTitle>
         <FooterNav>
           <FooterNavLink href="#">Home</FooterNavLink>
-          <FooterNavLink href="#">Services</FooterNavLink>
+          <FooterNavLink href="/know-us">Know Us</FooterNavLink>
         </FooterNav>
       </FooterColumn>
       <FooterColumn>
@@ -178,21 +188,24 @@ const Footer = () => (
             <BranchName>SASA BRANCH (MAIN)</BranchName>
             <span>2nd Floor, VGM Building, Km. 11, Sasa, Davao City</span>
             <BranchName>MATINA BRANCH</BranchName>
-            <span>Door 4, AJV Building, Matina-McArthur Highway, Davao City</span>
+            <span>
+              Door 4, AJV Building, Matina-McArthur Highway, Davao City
+            </span>
           </BranchInfo>
         </ContactItem>
       </FooterColumn>
       <FooterColumn>
         <FooterLogoSection>
           <img src={logo3} alt="Dr. A Dental Clinic Logo" />
-          <Logo style={{ color: '#fff', background: 'transparent' }}>
+          <Logo style={{ color: "#fff", background: "transparent" }}>
             DR. A DENTAL CLINIC
           </Logo>
         </FooterLogoSection>
       </FooterColumn>
     </FooterGrid>
     <CopyrightBar>
-      &copy; {new Date().getFullYear()} Dr. A Dental Clinic. All rights reserved.
+      &copy; {new Date().getFullYear()} Dr. A Dental Clinic. All rights
+      reserved.
     </CopyrightBar>
   </FooterContainer>
 );

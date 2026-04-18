@@ -1,8 +1,8 @@
-import React, { useEffect } from 'react';
-import styled from 'styled-components';
+import React, { useEffect } from "react";
+import styled from "styled-components";
 import { motion } from "framer-motion";
-import Header from '../components/Header';
-import { Phone, Mail, MapPin, Clock } from 'lucide-react';
+import Header from "../components/Header";
+import { Phone, Mail, MapPin, Clock } from "lucide-react";
 
 const PageContainer = styled.div`
   min-height: 100vh;
@@ -112,10 +112,11 @@ const Contact = () => {
             <CardTitle>Phone</CardTitle>
             <CardText>
               <BranchName>Sasa Branch</BranchName>
-              012345689 | 012345689
-              <br /><br />
+              0960 484 2905
+              <br />
+              <br />
               <BranchName>Matina Branch</BranchName>
-              012345689 | 012345689
+              0968 415 3301
             </CardText>
           </ContactCard>
           <ContactCard>
@@ -133,7 +134,8 @@ const Contact = () => {
             <CardText>
               <BranchName>SASA BRANCH (MAIN)</BranchName>
               2nd Floor, VGM Building, Km. 11, Sasa, Davao City
-              <br /><br />
+              <br />
+              <br />
               <BranchName>MATINA BRANCH</BranchName>
               Door 4, AJV Building, Matina-McArthur Highway, Davao City
             </CardText>
