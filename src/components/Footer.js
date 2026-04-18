@@ -207,10 +207,12 @@ const Footer = () => {
         </FooterColumn>
 
         {/* Sasa Map */}
+        {/* Sasa Map */}
         <FooterColumn>
           <FooterTitle>Sasa Branch</FooterTitle>
           <MapWrapper>
             <iframe
+              title="Dr. A Dental Clinic Sasa Branch Map"
               src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3958.9221549991385!2d125.6588734756821!3d7.135000615753906!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x32f96942b7d4c04d%3A0xfb759abf3ca3d68c!2sDr.%20A%20Dental%20Clinic!5e0!3m2!1sen!2sph!4v1776504834308!5m2!1sen!2sph"
               loading="lazy"
             />
@@ -222,6 +224,7 @@ const Footer = () => {
           <FooterTitle>Matina Branch</FooterTitle>
           <MapWrapper>
             <iframe
+              title="Dr. A Dental Clinic Matina Branch Map"
               src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3959.600773618855!2d125.57192387568158!3d7.056106916743607!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x6441df9ec34c02ad%3A0x6d898c492bff697f!2sDR%20A%20DENTAL%20CLINIC%20-%20MATINA%20BRANCH!5e0!3m2!1sen!2sph!4v1776504772383!5m2!1sen!2sph"
               loading="lazy"
             />
