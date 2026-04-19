@@ -400,6 +400,7 @@ const Admin = () => {
   const [selectedBooking, setSelectedBooking] = useState(null);
   const [commentsCount, setCommentsCount] = useState(0);
   const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
+  const [confirmAction, setConfirmAction] = useState(null);
   const navigate = useNavigate();
   const sliderRef = useRef(null);
 
@@ -731,7 +732,7 @@ const Admin = () => {
                     {booking.fullName}
                   </h3>
                   <span style={{ fontSize: '0.9rem', color: '#bcaaa4', fontWeight: 600 }}>
-                    {formatBookingDate(booking.date)}
+                    {formatBookingDate(booking.date)}{booking.time ? ` at ${booking.time}` : ''}
                   </span>
                 </div>
                 
@@ -782,7 +783,7 @@ const Admin = () => {
                   <DateTimeRow>
                     <BookingDetail>
                       <DetailLabel>Date:</DetailLabel>
-                      <DetailValue>{formatBookingDate(booking.date)}</DetailValue>
+                      <DetailValue>{formatBookingDate(booking.date)}{booking.time ? ` at ${booking.time}` : ''}</DetailValue>
                     </BookingDetail>
                     <BookingDetail>
                       <DetailLabel>Branch:</DetailLabel>
@@ -800,13 +801,13 @@ const Admin = () => {
                       <>
                         <ActionButton 
                           $variant="approve" 
-                          onClick={() => handleStatusUpdate(booking.id, 'approved')}
+                          onClick={() => setConfirmAction({ bookingId: booking.id, action: 'approved' })}
                         >
                           Approve
                         </ActionButton>
                         <ActionButton 
                           $variant="cancel" 
-                          onClick={() => handleStatusUpdate(booking.id, 'cancelled')}
+                          onClick={() => setConfirmAction({ bookingId: booking.id, action: 'cancelled' })}
                         >
                           Cancel
                         </ActionButton>
@@ -873,7 +874,7 @@ const Admin = () => {
                   <DateTimeRow>
                     <BookingDetail>
                       <DetailLabel>Date</DetailLabel>
-                      <DetailValue>{formatBookingDate(selectedBooking.date)}</DetailValue>
+                      <DetailValue>{formatBookingDate(selectedBooking.date)}{selectedBooking.time ? ` at ${selectedBooking.time}` : ''}</DetailValue>
                     </BookingDetail>
                     <BookingDetail>
                       <DetailLabel>Branch</DetailLabel>
@@ -890,19 +891,13 @@ const Admin = () => {
                     <div style={{ display: 'flex', gap: '1rem', marginTop: '1rem' }}>
                       <ActionButton 
                         $variant="approve" 
-                        onClick={() => {
-                          handleStatusUpdate(selectedBooking.id, 'approved');
-                          setSelectedBooking(null);
-                        }}
+                        onClick={() => setConfirmAction({ bookingId: selectedBooking.id, action: 'approved' })}
                       >
                         Approve
                       </ActionButton>
                       <ActionButton 
                         $variant="cancel" 
-                        onClick={() => {
-                          handleStatusUpdate(selectedBooking.id, 'cancelled');
-                          setSelectedBooking(null);
-                        }}
+                        onClick={() => setConfirmAction({ bookingId: selectedBooking.id, action: 'cancelled' })}
                       >
                         Cancel
                       </ActionButton>
@@ -919,6 +914,56 @@ const Admin = () => {
                     </div>
                   )}
                 </div>
+              </div>
+            </ModalContainer>
+          </ModalOverlay>
+        )}
+      </AnimatePresence>
+
+      <AnimatePresence>
+        {confirmAction && (
+          <ModalOverlay
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            onClick={() => setConfirmAction(null)}
+            style={{ zIndex: 2000 }}
+          >
+            <ModalContainer
+              initial={{ scale: 0.9, opacity: 0, y: 20 }}
+              animate={{ scale: 1, opacity: 1, y: 0 }}
+              exit={{ scale: 0.9, opacity: 0, y: 20 }}
+              onClick={e => e.stopPropagation()}
+              style={{ maxWidth: '400px', textAlign: 'center', padding: '3rem 2rem' }}
+            >
+              <h2 style={{ fontSize: '1.8rem', fontWeight: 900, color: '#4a3728', marginBottom: '1rem' }}>
+                Confirm {confirmAction.action === 'approved' ? 'Approval' : 'Cancellation'}
+              </h2>
+              <p style={{ color: '#bcaaa4', fontWeight: 600, marginBottom: '2rem' }}>
+                Are you sure you want to {confirmAction.action === 'approved' ? 'approve' : 'cancel'} this booking? An email notification will be sent to the patient.
+              </p>
+              
+              <div style={{ display: 'flex', gap: '1rem', justifyContent: 'center' }}>
+                <ActionButton 
+                  $variant="cancel" 
+                  onClick={() => setConfirmAction(null)}
+                  style={{ marginTop: 0, background: '#f5f5f5', color: '#4a3728' }}
+                >
+                  Go Back
+                </ActionButton>
+                <ActionButton 
+                  $variant={confirmAction.action === 'approved' ? 'approve' : 'cancel'}
+                  onClick={() => {
+                    handleStatusUpdate(confirmAction.bookingId, confirmAction.action);
+                    setConfirmAction(null);
+                    if (selectedBooking) {
+                      setSelectedBooking(null);
+                    }
+                  }}
+                  style={{ marginTop: 0, background: confirmAction.action === 'approved' ? '#4caf50' : '#f44336' }}
+                >
+                  Confirm
+                </ActionButton>
               </div>
             </ModalContainer>
           </ModalOverlay>

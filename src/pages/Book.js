@@ -1,9 +1,10 @@
-import React, { useState, useMemo, useRef, useEffect } from 'react';
+import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import styled, { keyframes } from 'styled-components';
 import { motion, AnimatePresence } from "framer-motion";
 import Header from '../components/Header';
-import { User, Phone, MessageSquare, Mail, CheckCircle2, ArrowRight, Loader2, ChevronLeft, ChevronRight, ChevronDown, MapPin, X, Home, CalendarPlus } from 'lucide-react';
+import { User, Phone, MessageSquare, Mail, CheckCircle2, ArrowRight, Loader2, ChevronLeft, ChevronRight, ChevronDown, MapPin, X, Home, CalendarPlus, Clock, Download } from 'lucide-react';
+import html2canvas from 'html2canvas';
 import { db } from './firebase';
 import {
   collection, addDoc, onSnapshot, query, doc,
@@ -228,31 +229,6 @@ const DropdownMenu = styled(motion.div)`
     background: #e0d7d2;
     border-radius: 10px;
   }
-
-  @media (max-width: 768px) {
-    position: fixed;
-    top: auto;
-    bottom: 20px;
-    left: 15px;
-    right: 15px;
-    max-height: 50vh;
-    border-radius: 24px;
-  }
-`;
-
-const MobileOverlay = styled(motion.div)`
-  display: none;
-  @media (max-width: 768px) {
-    display: block;
-    position: fixed;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    background: rgba(74, 55, 40, 0.2);
-    backdrop-filter: blur(4px);
-    z-index: 90;
-  }
 `;
 
 const DropdownOption = styled.button`
@@ -401,12 +377,22 @@ const ModalBackdrop = styled(motion.div)`
 const ModalCard = styled(motion.div)`
   background: white;
   border-radius: 32px;
-  padding: 3rem 2.5rem;
-  max-width: 480px;
+  padding: 2rem;
+  max-width: 520px;
   width: 100%;
+  max-height: 90vh;
+  overflow-y: auto;
   text-align: center;
   position: relative;
   box-shadow: 0 40px 80px rgba(74, 55, 40, 0.2), 0 8px 24px rgba(0, 0, 0, 0.1);
+
+  &::-webkit-scrollbar {
+    width: 6px;
+  }
+  &::-webkit-scrollbar-thumb {
+    background: #d7ccc8;
+    border-radius: 6px;
+  }
 
   @media (max-width: 480px) {
     padding: 2.5rem 1.5rem;
@@ -438,14 +424,14 @@ const ModalCloseButton = styled.button`
 `;
 
 const ModalIconRing = styled(motion.div)`
-  width: 100px;
-  height: 100px;
+  width: 80px;
+  height: 80px;
   border-radius: 50%;
   background: linear-gradient(135deg, rgba(76, 175, 80, 0.1), rgba(76, 175, 80, 0.05));
   display: flex;
   align-items: center;
   justify-content: center;
-  margin: 0 auto 1.5rem;
+  margin: 0 auto 1rem;
 `;
 
 const ModalTitle = styled.h2`
@@ -459,14 +445,14 @@ const ModalSubtext = styled.p`
   color: #6d4c41;
   font-size: 1rem;
   line-height: 1.6;
-  margin-bottom: 2rem;
+  margin-bottom: 1.5rem;
 `;
 
 const ModalSummary = styled.div`
   background: #fdfaf7;
   border-radius: 16px;
-  padding: 1.25rem;
-  margin-bottom: 2rem;
+  padding: 1rem 1.25rem;
+  margin-bottom: 1.5rem;
   text-align: left;
 `;
 
@@ -498,11 +484,16 @@ const SummaryRow = styled.div`
 `;
 
 const ModalActions = styled.div`
-  display: flex;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
   gap: 1rem;
 
-  @media (max-width: 400px) {
-    flex-direction: column;
+  & > *:last-child {
+    grid-column: 1 / -1;
+  }
+
+  @media (max-width: 480px) {
+    grid-template-columns: 1fr;
   }
 `;
 
@@ -652,11 +643,10 @@ const SlotBadge = styled.span`
   white-space: nowrap;
   letter-spacing: -0.2px;
   pointer-events: none;
-  color: ${
-    p => p.$selected ? 'rgba(255,255,255,0.8)' :
+  color: ${p => p.$selected ? 'rgba(255,255,255,0.8)' :
     p.$full ? '#e53935' :
-    p.$low ? '#f57c00' :
-    '#388e3c'
+      p.$low ? '#f57c00' :
+        '#388e3c'
   };
 
   @media (max-width: 480px) {
@@ -690,6 +680,18 @@ const MONTH_NAMES = [
 ];
 
 const DAY_LABELS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+
+const TIME_SLOTS = [
+  '09:00 AM',
+  '10:00 AM',
+  '11:00 AM',
+  '12:00 PM',
+  '01:00 PM',
+  '02:00 PM',
+  '03:00 PM',
+  '04:00 PM',
+  '05:00 PM'
+];
 
 const CustomCalendar = ({ value, onChange, blockedDates = [], bookingCounts = {}, maxPerDay = 10, dateCaps = {}, showAvailability = false }) => {
   const today = useMemo(() => {
@@ -782,9 +784,9 @@ const CustomCalendar = ({ value, onChange, blockedDates = [], bookingCounts = {}
         onClick={() => !disabled && handleSelect(d)}
         title={
           adminBlocked ? 'Unavailable — blocked by clinic' :
-          atCap ? 'Fully booked for this day' :
-          showBadge ? `${remaining} spot${remaining !== 1 ? 's' : ''} remaining` :
-          undefined
+            atCap ? 'Fully booked for this day' :
+              showBadge ? `${remaining} spot${remaining !== 1 ? 's' : ''} remaining` :
+                undefined
         }
         style={blockedStyle}
       >
@@ -795,7 +797,7 @@ const CustomCalendar = ({ value, onChange, blockedDates = [], bookingCounts = {}
             $low={remaining > 0 && remaining <= Math.max(2, Math.ceil(effectiveCap * 0.3)) && !adminBlocked}
             $selected={selected}
           >
-           {adminBlocked ? 'Closed' : remaining === 0 ? 'Full' : `${remaining} left`}
+            {adminBlocked ? 'Closed' : remaining === 0 ? 'Full' : `${remaining} left`}
           </SlotBadge>
         )}
       </DayCell>
@@ -879,53 +881,50 @@ const CustomDropdown = ({ value, onChange, placeholder, options, icon: IconCompo
       <AnimatePresence>
         {isOpen && (
           <>
-            <MobileOverlay
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              onClick={() => setIsOpen(false)}
-            />
             <DropdownMenu
               initial={{ opacity: 0, y: 10, scale: 0.95 }}
               animate={{ opacity: 1, y: 0, scale: 1 }}
               exit={{ opacity: 0, y: 10, scale: 0.95 }}
               transition={{ duration: 0.2, cubicBezier: [0.4, 0, 0.2, 1] }}
             >
-            <div style={{ maxHeight: '300px', overflowY: 'auto' }}>
-              {options.map((opt) => {
-                if (opt.isHeader) {
-                  return <DropdownHeader key={opt.value}>{opt.label}</DropdownHeader>;
-                }
-                return (
-                  <DropdownOption
-                    key={opt.value}
-                    type="button"
-                    $isSelected={value === opt.value}
-                    onClick={() => {
-                      onChange(opt.value);
-                      setIsOpen(false);
-                    }}
-                  >
-                    <OptionIcon $color={opt.color} $iconColor={opt.iconColor}>
-                      <IconComponent size={16} />
-                    </OptionIcon>
-                    <OptionDetails>
-                      <OptionLabel>{opt.label}</OptionLabel>
-                      {opt.sub && <OptionSub>{opt.sub}</OptionSub>}
-                    </OptionDetails>
-                    {value === opt.value && (
-                      <motion.span
-                        initial={{ scale: 0 }}
-                        animate={{ scale: 1 }}
-                        style={{ marginLeft: 'auto', color: '#4a3728' }}
-                      >
-                        <CheckCircle2 size={18} />
-                      </motion.span>
-                    )}
-                  </DropdownOption>
-                );
-              })}
-            </div>
+              <div style={{ maxHeight: '300px', overflowY: 'auto' }}>
+                {options.map((opt) => {
+                  if (opt.isHeader) {
+                    return <DropdownHeader key={opt.value}>{opt.label}</DropdownHeader>;
+                  }
+                  return (
+                    <DropdownOption
+                      key={opt.value + opt.label}
+                      type="button"
+                      $isSelected={value === opt.value}
+                      disabled={opt.disabled}
+                      onClick={() => {
+                        if (opt.disabled) return;
+                        onChange(opt.value);
+                        setIsOpen(false);
+                      }}
+                      style={{ opacity: opt.disabled ? 0.5 : 1, cursor: opt.disabled ? 'not-allowed' : 'pointer' }}
+                    >
+                      <OptionIcon $color={opt.color} $iconColor={opt.iconColor}>
+                        <IconComponent size={16} />
+                      </OptionIcon>
+                      <OptionDetails>
+                        <OptionLabel>{opt.label}</OptionLabel>
+                        {opt.sub && <OptionSub>{opt.sub}</OptionSub>}
+                      </OptionDetails>
+                      {value === opt.value && (
+                        <motion.span
+                          initial={{ scale: 0 }}
+                          animate={{ scale: 1 }}
+                          style={{ marginLeft: 'auto', color: '#4a3728' }}
+                        >
+                          <CheckCircle2 size={18} />
+                        </motion.span>
+                      )}
+                    </DropdownOption>
+                  );
+                })}
+              </div>
             </DropdownMenu>
           </>
         )}
@@ -950,16 +949,17 @@ const BookNow = () => {
     phone: '',
     branch: '',
     date: '',
+    time: '',
     reason: '',
     customReason: ''
   });
 
   // Calendar availability settings — per branch
-  const [settingsSasa, setSettingsSasa] = useState({ blockedDates: [], maxReservationsPerDay: 10, dateCaps: {}, disabledServicesByDate: {} });
-  const [settingsMatina, setSettingsMatina] = useState({ blockedDates: [], maxReservationsPerDay: 10, dateCaps: {}, disabledServicesByDate: {} });
+  const [settingsSasa, setSettingsSasa] = useState({ blockedDates: [], maxReservationsPerDay: 10, maxReservationsPerSlot: 1, dateCaps: {}, disabledServicesByDate: {} });
+  const [settingsMatina, setSettingsMatina] = useState({ blockedDates: [], maxReservationsPerDay: 10, maxReservationsPerSlot: 1, dateCaps: {}, disabledServicesByDate: {} });
   const [globalServices, setGlobalServices] = useState({ major: [], minor: [] });
-  // Booking counts keyed by branch: { sasa: { 'YYYY-MM-DD': n }, matina: { ... } }
-  const [bookingCountsByBranch, setBookingCountsByBranch] = useState({ sasa: {}, matina: {} });
+  // Booking counts keyed by branch: { sasa: { totals: {}, slots: {} }, matina: { ... } }
+  const [bookingCountsByBranch, setBookingCountsByBranch] = useState({ sasa: { totals: {}, slots: {} }, matina: { totals: {}, slots: {} } });
 
   useEffect(() => {
     // Fetch both branch settings from Firestore
@@ -969,6 +969,7 @@ const BookNow = () => {
         setSettingsSasa({
           blockedDates: d.blockedDates || [],
           maxReservationsPerDay: d.maxReservationsPerDay ?? 10,
+          maxReservationsPerSlot: d.maxReservationsPerSlot ?? 1,
           dateCaps: d.dateCaps || {},
           disabledServicesByDate: d.disabledServicesByDate || {}
         });
@@ -980,6 +981,7 @@ const BookNow = () => {
         setSettingsMatina({
           blockedDates: d.blockedDates || [],
           maxReservationsPerDay: d.maxReservationsPerDay ?? 10,
+          maxReservationsPerSlot: d.maxReservationsPerSlot ?? 1,
           dateCaps: d.dateCaps || {},
           disabledServicesByDate: d.disabledServicesByDate || {}
         });
@@ -989,18 +991,22 @@ const BookNow = () => {
     const unsubServices = onSnapshot(query(collection(db, 'services'), orderBy('name', 'asc')), snap => {
       const svs = snap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
       setGlobalServices({
-        major: svs.filter(s => s.type === 'major').map(s => ({ value: s.name, label: s.name, id: s.id })),
-        minor: svs.filter(s => s.type === 'minor').map(s => ({ value: s.name, label: s.name, id: s.id }))
+        major: svs.filter(s => s.type === 'major').map(s => ({ value: s.name, label: s.name, id: s.id, price: s.price })),
+        minor: svs.filter(s => s.type === 'minor').map(s => ({ value: s.name, label: s.name, id: s.id, price: s.price }))
       });
     });
 
-    // Count bookings per branch per date (pending + approved only)
+    // Count bookings per branch per date and slot (pending + approved only)
     const unsubBookings = onSnapshot(query(collection(db, 'bookings')), snap => {
-      const counts = { sasa: {}, matina: {} };
+      const counts = { sasa: { totals: {}, slots: {} }, matina: { totals: {}, slots: {} } };
       snap.docs.forEach(d => {
-        const { date, status, branch } = d.data();
+        const { date, time, status, branch } = d.data();
         if (date && status !== 'cancelled' && (branch === 'sasa' || branch === 'matina')) {
-          counts[branch][date] = (counts[branch][date] || 0) + 1;
+          counts[branch].totals[date] = (counts[branch].totals[date] || 0) + 1;
+          if (time) {
+            if (!counts[branch].slots[date]) counts[branch].slots[date] = {};
+            counts[branch].slots[date][time] = (counts[branch].slots[date][time] || 0) + 1;
+          }
         }
       });
       setBookingCountsByBranch(counts);
@@ -1020,9 +1026,11 @@ const BookNow = () => {
 
     const other = { value: 'Other', label: 'Other (Please specify)' };
 
+    const formatSub = (s) => s.price != null ? `₱${Number(s.price).toLocaleString('en-PH', { minimumFractionDigits: 0 })}` : undefined;
+
     return {
-      major: [...globalServices.major.filter(s => !disabledIds.includes(s.id)), other],
-      minor: [...globalServices.minor.filter(s => !disabledIds.includes(s.id)), other]
+      major: [...globalServices.major.filter(s => !disabledIds.includes(s.id)).map(s => ({ ...s, sub: formatSub(s) })), other],
+      minor: [...globalServices.minor.filter(s => !disabledIds.includes(s.id)).map(s => ({ ...s, sub: formatSub(s) })), other]
     };
   }, [formData.branch, formData.date, globalServices, settingsSasa, settingsMatina]);
 
@@ -1032,7 +1040,7 @@ const BookNow = () => {
   };
 
   const handleDateChange = (dateStr) => {
-    setFormData(prev => ({ ...prev, date: dateStr }));
+    setFormData(prev => ({ ...prev, date: dateStr, time: '' }));
   };
 
   const handleSubmit = async (e) => {
@@ -1064,6 +1072,26 @@ const BookNow = () => {
     navigate('/');
   };
 
+  const modalRef = useRef(null);
+
+  const handleSaveAsPng = async () => {
+    if (!modalRef.current) return;
+    try {
+      const canvas = await html2canvas(modalRef.current, {
+        backgroundColor: '#ffffff',
+        scale: 2,
+        useCORS: true,
+        logging: false,
+      });
+      const link = document.createElement('a');
+      link.download = `appointment-${formData.fullName.replace(/\s+/g, '-')}-${formData.date}.png`;
+      link.href = canvas.toDataURL('image/png');
+      link.click();
+    } catch (err) {
+      console.error('Screenshot failed:', err);
+    }
+  };
+
   const handleBookAnother = () => {
     setIsSubmitted(false);
     setFormData({
@@ -1072,6 +1100,7 @@ const BookNow = () => {
       phone: '',
       branch: '',
       date: '',
+      time: '',
       reason: '',
       customReason: ''
     });
@@ -1214,7 +1243,7 @@ const BookNow = () => {
                 value={formData.date}
                 onChange={handleDateChange}
                 blockedDates={formData.branch ? (formData.branch === 'sasa' ? settingsSasa.blockedDates : settingsMatina.blockedDates) : []}
-                bookingCounts={formData.branch ? (bookingCountsByBranch[formData.branch] || {}) : {}}
+                bookingCounts={formData.branch ? (bookingCountsByBranch[formData.branch]?.totals || {}) : {}}
                 maxPerDay={formData.branch ? (formData.branch === 'sasa' ? settingsSasa.maxReservationsPerDay : settingsMatina.maxReservationsPerDay) : 10}
                 dateCaps={formData.branch ? (formData.branch === 'sasa' ? settingsSasa.dateCaps : settingsMatina.dateCaps) : {}}
                 showAvailability={!!formData.branch}
@@ -1229,6 +1258,52 @@ const BookNow = () => {
                 onChange={() => { }}
               />
             </FormGroup>
+
+            <AnimatePresence>
+              {formData.date && (
+                <motion.div
+                  initial={{ opacity: 0, height: 0 }}
+                  animate={{ opacity: 1, height: 'auto' }}
+                  exit={{ opacity: 0, height: 0 }}
+                  transition={{ duration: 0.3 }}
+                  style={{ overflow: 'visible' }} // ensure dropdown works
+                >
+                  <FormGroup style={{ marginBottom: '2.5rem' }}>
+                    <Label><Clock size={16} /> Preferred Time</Label>
+                    <CustomDropdown
+                      value={formData.time}
+                      onChange={(val) => setFormData(prev => ({ ...prev, time: val }))}
+                      placeholder="Select a time slot"
+                      options={TIME_SLOTS.map(slot => {
+                        const branchSettings = formData.branch === 'sasa' ? settingsSasa : settingsMatina;
+                        const maxPerSlot = branchSettings.maxReservationsPerSlot ?? 1;
+                        const usedSlots = bookingCountsByBranch[formData.branch]?.slots?.[formData.date] || {};
+                        const isFull = (usedSlots[slot] || 0) >= maxPerSlot;
+
+                        return {
+                          value: isFull ? '' : slot,
+                          label: slot,
+                          sub: isFull ? 'Already Booked' : 'Available',
+                          disabled: isFull,
+                          color: isFull ? 'rgba(244,67,54,0.1)' : 'rgba(74, 55, 40, 0.06)',
+                          iconColor: isFull ? '#f44336' : '#4a3728'
+                        };
+                      })}
+                      icon={Clock}
+                    />
+                    {/* Hidden required input for validation */}
+                    <input
+                      type="text"
+                      value={formData.time}
+                      required
+                      style={{ position: 'absolute', opacity: 0, pointerEvents: 'none', height: 0 }}
+                      tabIndex={-1}
+                      onChange={() => { }}
+                    />
+                  </FormGroup>
+                </motion.div>
+              )}
+            </AnimatePresence>
 
             <FormGroup>
               <Label><MessageSquare size={16} /> Reason for Visit</Label>
@@ -1262,7 +1337,7 @@ const BookNow = () => {
                   />
                 </FormGroup>
               </FormGrid>
-              
+
               {/* Hidden required input for validation */}
               <input
                 type="text"
@@ -1324,6 +1399,7 @@ const BookNow = () => {
             onClick={handleGoHome}
           >
             <ModalCard
+              ref={modalRef}
               initial={{ opacity: 0, scale: 0.85, y: 30 }}
               animate={{ opacity: 1, scale: 1, y: 0 }}
               exit={{ opacity: 0, scale: 0.85, y: 30 }}
@@ -1361,13 +1437,50 @@ const BookNow = () => {
                   <span>Date</span>
                   <span>{formatDate(formData.date)}</span>
                 </SummaryRow>
+                <SummaryRow>
+                  <span>Time</span>
+                  <span>{formData.time}</span>
+                </SummaryRow>
                 {formData.reason && (
-                  <SummaryRow>
-                    <span>Reason</span>
-                    <span>{formData.reason === 'Other' ? formData.customReason : formData.reason}</span>
-                  </SummaryRow>
+                  <>
+                    <SummaryRow>
+                      <span>Reason</span>
+                      <span>{formData.reason === 'Other' ? formData.customReason : formData.reason}</span>
+                    </SummaryRow>
+                    {formData.reason !== 'Other' && (() => {
+                      const selectedService = [...globalServices.major, ...globalServices.minor].find(s => s.value === formData.reason);
+                      if (selectedService && selectedService.price != null) {
+                        return (
+                          <SummaryRow>
+                            <span>Price</span>
+                            <span style={{ color: '#2e7d32' }}>₱{Number(selectedService.price).toLocaleString('en-PH', { minimumFractionDigits: 0 })}</span>
+                          </SummaryRow>
+                        );
+                      }
+                      return null;
+                    })()}
+                  </>
                 )}
               </ModalSummary>
+
+              {/* Payment reminder */}
+              <div style={{
+                background: 'linear-gradient(135deg, #fff8e1, #fff3cd)',
+                border: '1px solid #ffe082',
+                borderRadius: '14px',
+                padding: '1rem 1.25rem',
+                marginBottom: '1.5rem',
+                display: 'flex',
+                flexDirection: 'column',
+                gap: '0.35rem'
+              }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontWeight: 800, color: '#795548', fontSize: '0.82rem', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+                  <span>💰</span> Payment Information
+                </div>
+                <p style={{ margin: 0, fontSize: '0.84rem', color: '#5d4037', fontWeight: 600, lineHeight: 1.6 }}>
+                  Partial payment or full payment will be determined <strong>on-site</strong> at the time of your appointment. Please bring a valid ID.
+                </p>
+              </div>
 
               <ModalActions>
                 <ModalButton
@@ -1377,6 +1490,15 @@ const BookNow = () => {
                   whileTap={{ scale: 0.98 }}
                 >
                   <CalendarPlus size={18} /> Book Another
+                </ModalButton>
+                <ModalButton
+                  onClick={handleSaveAsPng}
+                  $variant="outline"
+                  whileHover={{ scale: 1.02 }}
+                  whileTap={{ scale: 0.98 }}
+                  style={{ background: '#f1f8e9', borderColor: '#aed581', color: '#388e3c' }}
+                >
+                  <Download size={18} /> Save as PNG
                 </ModalButton>
                 <ModalButton
                   onClick={handleGoHome}

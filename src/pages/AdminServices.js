@@ -3,7 +3,7 @@ import styled from 'styled-components';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   Plus, Trash2, CheckCircle2, AlertCircle,
-  Lock, LogIn, Eye, EyeOff, ShieldOff, Stethoscope, Search, ChevronDown
+  Lock, LogIn, Eye, EyeOff, ShieldOff, Stethoscope, Search, ChevronDown, DollarSign
 } from 'lucide-react';
 import { db } from './firebase';
 import {
@@ -275,6 +275,13 @@ const ServiceName = styled.span`
   }
 `;
 
+const ServiceMeta = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+`;
+
 const ServiceType = styled.span`
   font-size: 0.7rem;
   font-weight: 800;
@@ -285,6 +292,21 @@ const ServiceType = styled.span`
   padding: 0.2rem 0.5rem;
   border-radius: 6px;
   width: fit-content;
+  white-space: nowrap;
+
+  @media (max-width: 480px) {
+    font-size: 0.65rem;
+    padding: 0.15rem 0.4rem;
+  }
+`;
+
+const ServicePrice = styled.span`
+  font-size: 0.7rem;
+  font-weight: 800;
+  color: #2e7d32;
+  background: #e8f5e9;
+  padding: 0.2rem 0.5rem;
+  border-radius: 6px;
   white-space: nowrap;
 
   @media (max-width: 480px) {
@@ -402,6 +424,7 @@ const AdminServices = () => {
   const [services, setServices] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [newServiceName, setNewServiceName] = useState('');
+  const [newServicePrice, setNewServicePrice] = useState('');
   const [newServiceType, setNewServiceType] = useState('major');
   const [showTypeDropdown, setShowTypeDropdown] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
@@ -454,12 +477,20 @@ const AdminServices = () => {
     e.preventDefault();
     if (!newServiceName.trim()) return;
 
+    const serviceData = {
+      name: newServiceName.trim().toUpperCase(),
+      type: newServiceType
+    };
+
+    const priceNum = parseFloat(newServicePrice);
+    if (!isNaN(priceNum) && priceNum > 0) {
+      serviceData.price = priceNum;
+    }
+
     try {
-      await addDoc(collection(db, 'services'), {
-        name: newServiceName.trim().toUpperCase(),
-        type: newServiceType
-      });
+      await addDoc(collection(db, 'services'), serviceData);
       setNewServiceName('');
+      setNewServicePrice('');
       showMsg('Service added successfully');
     } catch (err) {
       showMsg('Failed to add service', true);
@@ -603,7 +634,20 @@ const AdminServices = () => {
               onChange={e => setNewServiceName(e.target.value)}
               required
             />
-            
+
+            <div style={{ position: 'relative', minWidth: '130px' }}>
+              <DollarSign size={16} style={{ position: 'absolute', left: '0.9rem', top: '50%', transform: 'translateY(-50%)', color: '#bcaaa4' }} />
+              <Input
+                type="number"
+                placeholder="Price"
+                value={newServicePrice}
+                onChange={e => setNewServicePrice(e.target.value)}
+                min="0"
+                step="0.01"
+                style={{ paddingLeft: '2.5rem', width: '100%', boxSizing: 'border-box' }}
+              />
+            </div>
+
             <SelectionContainer>
               <SelectTrigger 
                 type="button" 
@@ -668,7 +712,10 @@ const AdminServices = () => {
                     <ServiceItem key={s.id} layout initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
                       <ServiceInfo>
                         <ServiceName>{s.name}</ServiceName>
-                        <ServiceType>Major Procedure</ServiceType>
+                        <ServiceMeta>
+                          <ServiceType>Major Procedure</ServiceType>
+                          {s.price != null && <ServicePrice>₱{Number(s.price).toLocaleString('en-PH', { minimumFractionDigits: 0 })}</ServicePrice>}
+                        </ServiceMeta>
                       </ServiceInfo>
                       <IconButton $variant="danger" onClick={() => handleDeleteService(s.id)} whileHover={{ scale: 1.1 }} whileTap={{ scale: 0.9 }}>
                         <Trash2 size={16} />
@@ -693,7 +740,10 @@ const AdminServices = () => {
                     <ServiceItem key={s.id} layout initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
                       <ServiceInfo>
                         <ServiceName>{s.name}</ServiceName>
-                        <ServiceType>Minor Procedure</ServiceType>
+                        <ServiceMeta>
+                          <ServiceType>Minor Procedure</ServiceType>
+                          {s.price != null && <ServicePrice>₱{Number(s.price).toLocaleString('en-PH', { minimumFractionDigits: 0 })}</ServicePrice>}
+                        </ServiceMeta>
                       </ServiceInfo>
                       <IconButton $variant="danger" onClick={() => handleDeleteService(s.id)} whileHover={{ scale: 1.1 }} whileTap={{ scale: 0.9 }}>
                         <Trash2 size={16} />

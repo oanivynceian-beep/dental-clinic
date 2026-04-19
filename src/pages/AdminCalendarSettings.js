@@ -689,6 +689,7 @@ const AdminCalendarSettings = () => {
   // ── Branch settings ──
   const [blockedDates, setBlockedDates] = useState([]);
   const [maxPerDay, setMaxPerDay] = useState(10);
+  const [maxPerSlot, setMaxPerSlot] = useState(1);
   const [dateCaps, setDateCaps] = useState({});   // { 'YYYY-MM-DD': number }
 
   // ── Calendar ──
@@ -733,6 +734,7 @@ const AdminCalendarSettings = () => {
         const data = snap.data();
         setBlockedDates(data.blockedDates || []);
         setMaxPerDay(data.maxReservationsPerDay ?? 10);
+        setMaxPerSlot(data.maxReservationsPerSlot ?? 1);
         setDateCaps(data.dateCaps || {});
       } else {
         setBlockedDates([]);
@@ -769,6 +771,7 @@ const AdminCalendarSettings = () => {
       } else {
         setBlockedDates([]);
         setMaxPerDay(10);
+        setMaxPerSlot(1);
         setDateCaps({});
         setDisabledServicesByDate({});
       }
@@ -880,6 +883,7 @@ const handleSave = async () => {
     await setDoc(doc(db, 'calendarSettings', activeBranch), {
       blockedDates: [...blockedDates].sort(),
       maxReservationsPerDay: maxPerDay,
+      maxReservationsPerSlot: maxPerSlot,
       dateCaps,
       disabledServicesByDate,
       updatedAt: new Date().toISOString()
@@ -1308,7 +1312,7 @@ return (
         {/* ─── RIGHT: Global Cap + Config List ─── */}
         <div style={{ display: 'flex', flexDirection: 'column', gap: '2rem' }}>
 
-          {/* Global Daily Cap */}
+          {/* Global Capacity Limits */}
           <Panel
             initial={{ opacity: 0, y: 16 }}
             animate={{ opacity: 1, y: 0 }}
@@ -1316,18 +1320,18 @@ return (
           >
             <PanelTitle>
               <Settings2 size={18} color="#4a3728" />
-              Global Daily Cap
+              Global Capacity Limits
             </PanelTitle>
             <PanelSubtitle>
-              Default max bookings per day for{' '}
+              Default limits for{' '}
               <strong>{activeBranch === 'sasa' ? 'Sasa Branch' : 'Matina Branch'}</strong>.
-              Per-date overrides take priority.
+              Per-date overrides take priority over the daily cap.
             </PanelSubtitle>
 
-            <SlotRow>
+            <SlotRow style={{ marginBottom: '1rem' }}>
               <div>
                 <SlotLabel>Max Reservations / Day</SlotLabel>
-                <SlotSub>Applied to all dates without a custom cap</SlotSub>
+                <SlotSub>Applied to all dates without a custom date cap</SlotSub>
               </div>
               <CounterGroup>
                 <CounterBtn
@@ -1342,6 +1346,30 @@ return (
                   type="button"
                   onClick={() => setMaxPerDay(p => Math.min(100, p + 1))}
                   disabled={maxPerDay >= 100}
+                >
+                  <Plus size={14} />
+                </CounterBtn>
+              </CounterGroup>
+            </SlotRow>
+
+            <SlotRow>
+              <div>
+                <SlotLabel>Max Reservations / 1-Hour Slot</SlotLabel>
+                <SlotSub>Limits simultaneous guests</SlotSub>
+              </div>
+              <CounterGroup>
+                <CounterBtn
+                  type="button"
+                  onClick={() => setMaxPerSlot(p => Math.max(1, p - 1))}
+                  disabled={maxPerSlot <= 1}
+                >
+                  <Minus size={14} />
+                </CounterBtn>
+                <CountValue>{maxPerSlot}</CountValue>
+                <CounterBtn
+                  type="button"
+                  onClick={() => setMaxPerSlot(p => Math.min(100, p + 1))}
+                  disabled={maxPerSlot >= 100}
                 >
                   <Plus size={14} />
                 </CounterBtn>

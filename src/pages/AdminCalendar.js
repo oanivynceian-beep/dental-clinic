@@ -808,9 +808,17 @@ const AdminCalendar = () => {
                         <span style={{ fontSize: '0.75rem', color: '#9e9e9e', fontWeight: 700, display: 'block' }}>BRANCH</span>
                         <span style={{ fontSize: '1.05rem', color: '#4a3728', fontWeight: 600, textTransform: 'capitalize' }}>{b.branch}</span>
                       </div>
-                      <div style={{ gridColumn: '1 / -1' }}>
-                        <span style={{ fontSize: '0.75rem', color: '#9e9e9e', fontWeight: 700, display: 'block' }}>CONTACT</span>
-                        <span style={{ fontSize: '1.05rem', color: '#4a3728', fontWeight: 600 }}>{b.phone}</span>
+                      <div style={{ gridColumn: '1 / -1', display: 'flex', justifyContent: 'space-between' }}>
+                        <div>
+                          <span style={{ fontSize: '0.75rem', color: '#9e9e9e', fontWeight: 700, display: 'block' }}>CONTACT</span>
+                          <span style={{ fontSize: '1.05rem', color: '#4a3728', fontWeight: 600 }}>{b.phone}</span>
+                        </div>
+                        {b.time && (
+                          <div style={{ textAlign: 'right' }}>
+                            <span style={{ fontSize: '0.75rem', color: '#9e9e9e', fontWeight: 700, display: 'block' }}>TIME</span>
+                            <span style={{ fontSize: '1.05rem', color: '#4a3728', fontWeight: 600 }}>{b.time}</span>
+                          </div>
+                        )}
                       </div>
                     </div>
                   </DayBookingCard>
