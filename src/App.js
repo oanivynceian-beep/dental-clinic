@@ -15,6 +15,7 @@ import AdminCalendar from "./pages/AdminCalendar";
 import AdminStats from "./pages/AdminStats";
 import AdminCalendarSettings from "./pages/AdminCalendarSettings";
 import AdminServices from "./pages/AdminServices";
+import AdminDentists from "./pages/AdminDentists";
 
 function App() {
   return (
@@ -36,6 +37,7 @@ function App() {
           element={<AdminCalendarSettings />}
         />
         <Route path="/admin/services" element={<AdminServices />} />
+        <Route path="/admin/dentists" element={<AdminDentists />} />
       </Routes>
       <Analytics />
     </Router>

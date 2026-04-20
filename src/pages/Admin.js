@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef, useEffect, useMemo } from 'react';
 import styled from 'styled-components';
 import { motion, AnimatePresence } from "framer-motion";
 import { ChevronRight, ChevronLeft, Loader2, Lock, LogIn, Eye, EyeOff, LayoutGrid, List, X } from 'lucide-react';
@@ -401,8 +401,48 @@ const Admin = () => {
   const [commentsCount, setCommentsCount] = useState(0);
   const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
   const [confirmAction, setConfirmAction] = useState(null);
+
+  // New state for Edit Mode
+  const [settingsSasa, setSettingsSasa] = useState({ blockedDates: [], dateCaps: {}, maxReservationsPerDay: 10, maxReservationsPerSlot: 1 });
+  const [settingsMatina, setSettingsMatina] = useState({ blockedDates: [], dateCaps: {}, maxReservationsPerDay: 10, maxReservationsPerSlot: 1 });
+  const [dentists, setDentists] = useState([]);
+  const [isEditMode, setIsEditMode] = useState(false);
+  const [editData, setEditData] = useState({ date: '', time: '', dentist: '', reasonForEdit: '' });
+
   const navigate = useNavigate();
   const sliderRef = useRef(null);
+
+  const TIME_SLOTS = [
+    '09:00 AM', '10:00 AM', '11:00 AM', '12:00 PM',
+    '01:00 PM', '02:00 PM', '03:00 PM', '04:00 PM', '05:00 PM'
+  ];
+
+  const bookingCountsByBranch = useMemo(() => {
+    const counts = { sasa: { totals: {}, slots: {} }, matina: { totals: {}, slots: {} } };
+    bookings.forEach(d => {
+      const { date, time, status, branch } = d;
+      if (date && status !== 'cancelled' && (branch === 'sasa' || branch === 'matina')) {
+        counts[branch].totals[date] = (counts[branch].totals[date] || 0) + 1;
+        if (time) {
+          if (!counts[branch].slots[date]) counts[branch].slots[date] = {};
+          counts[branch].slots[date][time] = (counts[branch].slots[date][time] || 0) + 1;
+        }
+      }
+    });
+    return counts;
+  }, [bookings]);
+
+  useEffect(() => {
+    if (confirmAction?.bookingData) {
+      setEditData({
+        date: confirmAction.bookingData.date || '',
+        time: confirmAction.bookingData.time || '',
+        dentist: confirmAction.bookingData.dentist || '',
+        reasonForEdit: ''
+      });
+      setIsEditMode(false);
+    }
+  }, [confirmAction]);
 
   const checkScrollPosition = () => {
     if (sliderRef.current) {
@@ -429,10 +469,10 @@ const Admin = () => {
     if (!isAuthorized) return;
 
     const q = query(
-      collection(db, 'bookings'), 
+      collection(db, 'bookings'),
       orderBy('createdAt', 'desc')
     );
-    
+
     const unsubscribe = onSnapshot(q, (snapshot) => {
       const bookingsData = snapshot.docs.map(doc => ({
         id: doc.id,
@@ -453,9 +493,40 @@ const Admin = () => {
       setCommentsCount(snapshot.size);
     });
 
+    const unsubSasa = onSnapshot(doc(db, 'calendarSettings', 'sasa'), snap => {
+      if (snap.exists()) {
+        const d = snap.data();
+        setSettingsSasa({
+          blockedDates: d.blockedDates || [],
+          maxReservationsPerDay: d.maxReservationsPerDay ?? 10,
+          maxReservationsPerSlot: d.maxReservationsPerSlot ?? 1,
+          dateCaps: d.dateCaps || {}
+        });
+      }
+    });
+
+    const unsubMatina = onSnapshot(doc(db, 'calendarSettings', 'matina'), snap => {
+      if (snap.exists()) {
+        const d = snap.data();
+        setSettingsMatina({
+          blockedDates: d.blockedDates || [],
+          maxReservationsPerDay: d.maxReservationsPerDay ?? 10,
+          maxReservationsPerSlot: d.maxReservationsPerSlot ?? 1,
+          dateCaps: d.dateCaps || {}
+        });
+      }
+    });
+
+    const unsubDentists = onSnapshot(collection(db, 'dentists'), snap => {
+      setDentists(snap.docs.map(doc => ({ id: doc.id, ...doc.data() })));
+    });
+
     return () => {
       unsubscribe();
       unsubscribeComments();
+      unsubSasa();
+      unsubMatina();
+      unsubDentists();
     };
   }, [isAuthorized, password]);
 
@@ -501,7 +572,7 @@ const Admin = () => {
               Enter the clinic access key to view the dashboard.
             </p>
           </div>
-          
+
           <form onSubmit={handleLogin} style={{ width: '100%', display: 'flex', flexDirection: 'column', gap: '1rem' }}>
             <div style={{ position: 'relative', width: '100%' }}>
               <input
@@ -520,14 +591,14 @@ const Admin = () => {
                   transition: 'border-color 0.2s'
                 }}
               />
-              <div 
+              <div
                 onClick={() => setShowPassword(!showPassword)}
                 style={{ position: 'absolute', right: '1.25rem', top: '50%', transform: 'translateY(-50%)', cursor: 'pointer', color: '#bcaaa4' }}
               >
                 {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
               </div>
             </div>
-            
+
             {loginError && (
               <p style={{ color: '#f44336', fontSize: '0.9rem', fontWeight: 600 }}>
                 {loginError}
@@ -543,25 +614,44 @@ const Admin = () => {
     );
   }
 
-  const handleStatusUpdate = async (id, newStatus) => {
+  const handleStatusUpdate = async (id, newStatus, edits = null) => {
     try {
       const booking = bookings.find(b => b.id === id);
-      
-      await updateDoc(doc(db, 'bookings', id), {
-        status: newStatus
-      });
+
+      const payload = { status: newStatus };
+      if (edits) {
+        payload.date = edits.date;
+        payload.time = edits.time;
+        payload.dentist = edits.dentist;
+      }
+
+      await updateDoc(doc(db, 'bookings', id), payload);
 
       if (booking && booking.email) {
+        const isEdited = !!(edits && edits.reasonForEdit);
+
+        const baseMessage = newStatus === 'approved'
+          ? "Your appointment has been approved! We look forward to seeing you at our clinic."
+          : "We're sorry, but your appointment has been declined. Please contact us if you'd like to reschedule.";
+
+        // Resolve the final booking details (use edits if present)
+        const finalDate = edits?.date ? edits.date : booking.date;
+        const finalTime = edits?.time ? edits.time : booking.time;
+        const finalDentist = edits?.dentist ? edits.dentist : (booking.dentist || 'Any Available Dentist');
+
         const templateParams = {
           to_name: booking.fullName,
           to_email: booking.email,
           status: newStatus.toUpperCase(),
-          date: formatBookingDate(booking.date),
-          branch: booking.branch,
+          date: formatBookingDate(finalDate),
+          time: finalTime || 'To be confirmed',
+          branch: booking.branch ? (booking.branch.charAt(0).toUpperCase() + booking.branch.slice(1) + ' Branch') : booking.branch,
           reason: booking.reason || 'General Check-up',
-          message: newStatus === 'approved' 
-            ? "Your appointment has been approved! We look forward to seeing you at our clinic." 
-            : "We're sorry, but your appointment has been declined. Please contact us if you'd like to reschedule."
+          dentist: finalDentist,
+          message: baseMessage,
+          edit_note: isEdited
+            ? `⚠️ Note: Your appointment details have been updated by our admin.\nReason: ${edits.reasonForEdit}`
+            : ''
         };
 
         // Send email using EmailJS
@@ -615,7 +705,7 @@ const Admin = () => {
   const handleNext = () => {
     if (sliderRef.current) {
       const isNearEnd = sliderRef.current.scrollLeft + sliderRef.current.clientWidth >= sliderRef.current.scrollWidth - 350;
-      
+
       if (isNearEnd) {
         setDocLimit(prev => prev + 3);
         setTimeout(() => {
@@ -649,14 +739,14 @@ const Admin = () => {
               <span style={{ fontSize: '0.8rem', color: '#bcaaa4', fontWeight: 600 }}>
                 Clinic Access Mode
               </span>
-              <button 
+              <button
                 onClick={handleLogout}
-                style={{ 
-                  background: 'none', 
-                  border: 'none', 
-                  color: '#f44336', 
-                  fontSize: '0.8rem', 
-                  fontWeight: 800, 
+                style={{
+                  background: 'none',
+                  border: 'none',
+                  color: '#f44336',
+                  fontSize: '0.8rem',
+                  fontWeight: 800,
                   cursor: 'pointer',
                   textDecoration: 'underline'
                 }}
@@ -684,8 +774,8 @@ const Admin = () => {
         <div style={{ display: 'flex', flexWrap: 'wrap', gap: '1.5rem', justifyContent: 'space-between', alignItems: 'center', marginBottom: '2rem', borderBottom: '1px solid #e0e0e0', paddingBottom: '1rem' }}>
           <Tabs style={{ marginBottom: 0, borderBottom: 'none', paddingBottom: 0 }}>
             {['Online Bookings', 'Pending', 'Approved'].map(tab => (
-              <Tab 
-                key={tab} 
+              <Tab
+                key={tab}
                 $active={activeTab === tab}
                 onClick={() => setActiveTab(tab)}
               >
@@ -693,15 +783,15 @@ const Admin = () => {
               </Tab>
             ))}
           </Tabs>
-          
+
           <div style={{ display: 'flex', gap: '0.5rem', background: '#e0e0e0', padding: '0.25rem', borderRadius: '12px' }}>
-            <button 
+            <button
               onClick={() => setViewType('slider')}
               style={{ padding: '0.5rem', borderRadius: '8px', border: 'none', background: viewType === 'slider' ? 'white' : 'transparent', color: viewType === 'slider' ? '#4a3728' : '#9e9e9e', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: viewType === 'slider' ? '0 2px 5px rgba(0,0,0,0.1)' : 'none', transition: 'all 0.2s' }}
             >
               <LayoutGrid size={20} />
             </button>
-            <button 
+            <button
               onClick={() => setViewType('list')}
               style={{ padding: '0.5rem', borderRadius: '8px', border: 'none', background: viewType === 'list' ? 'white' : 'transparent', color: viewType === 'list' ? '#4a3728' : '#9e9e9e', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: viewType === 'list' ? '0 2px 5px rgba(0,0,0,0.1)' : 'none', transition: 'all 0.2s' }}
             >
@@ -720,7 +810,7 @@ const Admin = () => {
         ) : viewType === 'list' ? (
           <ListViewContainer>
             {filteredBookings.slice(0, docLimit).map((booking, index) => (
-              <ListItem 
+              <ListItem
                 key={booking.id}
                 initial={{ opacity: 0, y: 10 }}
                 animate={{ opacity: 1, y: 0 }}
@@ -735,21 +825,21 @@ const Admin = () => {
                     {formatBookingDate(booking.date)}{booking.time ? ` at ${booking.time}` : ''}
                   </span>
                 </div>
-                
+
                 <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
-                    {booking.status === 'pending' && <span style={{ color: '#ff9800', fontWeight: 700, fontSize: '0.9rem' }}>Pending</span>}
-                    {booking.status === 'approved' && <span style={{ color: '#4caf50', fontWeight: 700, fontSize: '0.9rem' }}>Approved</span>}
-                    {booking.status === 'cancelled' && <span style={{ color: '#f44336', fontWeight: 700, fontSize: '0.9rem' }}>Cancelled</span>}
-                  
+                  {booking.status === 'pending' && <span style={{ color: '#ff9800', fontWeight: 700, fontSize: '0.9rem' }}>Pending</span>}
+                  {booking.status === 'approved' && <span style={{ color: '#4caf50', fontWeight: 700, fontSize: '0.9rem' }}>Approved</span>}
+                  {booking.status === 'cancelled' && <span style={{ color: '#f44336', fontWeight: 700, fontSize: '0.9rem' }}>Cancelled</span>}
+
                   <button style={{ background: '#f5f5f5', border: 'none', padding: '0.5rem 1rem', borderRadius: '10px', fontSize: '0.8rem', fontWeight: 700, color: '#4a3728', cursor: 'pointer' }}>
                     View Details
                   </button>
                 </div>
               </ListItem>
             ))}
-            
+
             <div style={{ display: 'flex', justifyContent: 'center', marginTop: '1rem' }}>
-              <button 
+              <button
                 onClick={() => setDocLimit(prev => prev + 5)}
                 disabled={docLimit >= filteredBookings.length}
                 style={{
@@ -774,7 +864,7 @@ const Admin = () => {
                   transition={{ delay: index * 0.1 }}
                 >
                   <PatientName title={booking.fullName}>{booking.fullName}</PatientName>
-                  
+
                   <BookingDetail>
                     <DetailLabel>Reason:</DetailLabel>
                     <DetailValue>{booking.reason || 'Not specified'}</DetailValue>
@@ -792,6 +882,11 @@ const Admin = () => {
                   </DateTimeRow>
 
                   <BookingDetail>
+                    <DetailLabel>Dentist:</DetailLabel>
+                    <DetailValue style={{ fontSize: '1rem' }}>{booking.dentist || 'Any Available'}</DetailValue>
+                  </BookingDetail>
+
+                  <BookingDetail>
                     <DetailLabel>Contact:</DetailLabel>
                     <DetailValue style={{ fontSize: '0.9rem' }}>{booking.phone}</DetailValue>
                   </BookingDetail>
@@ -799,15 +894,15 @@ const Admin = () => {
                   <div style={{ display: 'flex', gap: '1rem' }}>
                     {booking.status === 'pending' && (
                       <>
-                        <ActionButton 
-                          $variant="approve" 
-                          onClick={() => setConfirmAction({ bookingId: booking.id, action: 'approved' })}
+                        <ActionButton
+                          $variant="approve"
+                          onClick={() => setConfirmAction({ bookingId: booking.id, action: 'approved', bookingData: booking })}
                         >
                           Approve
                         </ActionButton>
-                        <ActionButton 
-                          $variant="cancel" 
-                          onClick={() => setConfirmAction({ bookingId: booking.id, action: 'cancelled' })}
+                        <ActionButton
+                          $variant="cancel"
+                          onClick={() => setConfirmAction({ bookingId: booking.id, action: 'cancelled', bookingData: booking })}
                         >
                           Cancel
                         </ActionButton>
@@ -827,7 +922,7 @@ const Admin = () => {
                 </BookingCard>
               ))}
             </BookingsSlider>
-            <ArrowButton 
+            <ArrowButton
               onClick={handleNext}
               disabled={isAtEnd && docLimit >= filteredBookings.length}
             >
@@ -854,18 +949,18 @@ const Admin = () => {
               <CloseButton onClick={() => setSelectedBooking(null)}>
                 <X size={20} />
               </CloseButton>
-              
+
               <div style={{ padding: '3rem 2.5rem' }}>
                 <h2 style={{ fontSize: '2rem', fontWeight: 900, color: '#4a3728', marginBottom: '2rem' }}>
                   Booking Details
                 </h2>
-                
+
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
                   <BookingDetail>
                     <DetailLabel>Patient Name</DetailLabel>
                     <DetailValue style={{ fontSize: '1.5rem' }}>{selectedBooking.fullName}</DetailValue>
                   </BookingDetail>
-                  
+
                   <BookingDetail>
                     <DetailLabel>Reason</DetailLabel>
                     <DetailValue>{selectedBooking.reason || 'Not specified'}</DetailValue>
@@ -883,21 +978,26 @@ const Admin = () => {
                   </DateTimeRow>
 
                   <BookingDetail>
+                    <DetailLabel>Dentist</DetailLabel>
+                    <DetailValue>{selectedBooking.dentist || 'Any Available'}</DetailValue>
+                  </BookingDetail>
+
+                  <BookingDetail>
                     <DetailLabel>Contact</DetailLabel>
                     <DetailValue>{selectedBooking.phone}</DetailValue>
                   </BookingDetail>
 
                   {selectedBooking.status === 'pending' && (
                     <div style={{ display: 'flex', gap: '1rem', marginTop: '1rem' }}>
-                      <ActionButton 
-                        $variant="approve" 
-                        onClick={() => setConfirmAction({ bookingId: selectedBooking.id, action: 'approved' })}
+                      <ActionButton
+                        $variant="approve"
+                        onClick={() => { setSelectedBooking(null); setConfirmAction({ bookingId: selectedBooking.id, action: 'approved', bookingData: selectedBooking }); }}
                       >
                         Approve
                       </ActionButton>
-                      <ActionButton 
-                        $variant="cancel" 
-                        onClick={() => setConfirmAction({ bookingId: selectedBooking.id, action: 'cancelled' })}
+                      <ActionButton
+                        $variant="cancel"
+                        onClick={() => { setSelectedBooking(null); setConfirmAction({ bookingId: selectedBooking.id, action: 'cancelled', bookingData: selectedBooking }); }}
                       >
                         Cancel
                       </ActionButton>
@@ -942,23 +1042,74 @@ const Admin = () => {
               <p style={{ color: '#bcaaa4', fontWeight: 600, marginBottom: '2rem' }}>
                 Are you sure you want to {confirmAction.action === 'approved' ? 'approve' : 'cancel'} this booking? An email notification will be sent to the patient.
               </p>
-              
+
+              {confirmAction.action === 'approved' && (
+                <div style={{ textAlign: 'left', marginBottom: '2rem' }}>
+                  <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontWeight: 700, color: '#4a3728', cursor: 'pointer', marginBottom: '1rem' }}>
+                    <input type="checkbox" checked={isEditMode} onChange={(e) => setIsEditMode(e.target.checked)} />
+                    Modify Booking Details (Optional)
+                  </label>
+
+                  {isEditMode && (
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem', padding: '1rem', background: '#f5f5f5', borderRadius: '12px' }}>
+                      <div style={{ display: 'flex', flexDirection: 'column' }}>
+                        <span style={{ fontSize: '0.8rem', fontWeight: 700, color: '#a1887f' }}>Date</span>
+                        <input type="date" value={editData.date} onChange={e => setEditData({ ...editData, date: e.target.value })} style={{ padding: '0.5rem', borderRadius: '8px', border: '1px solid #ccc' }} />
+                      </div>
+
+                      <div style={{ display: 'flex', flexDirection: 'column' }}>
+                        <span style={{ fontSize: '0.8rem', fontWeight: 700, color: '#a1887f' }}>Time</span>
+                        <select value={editData.time} onChange={e => setEditData({ ...editData, time: e.target.value })} style={{ padding: '0.5rem', borderRadius: '8px', border: '1px solid #ccc' }}>
+                          <option value="">Select Time</option>
+                          {TIME_SLOTS.map(t => {
+                            const bBranch = confirmAction?.bookingData?.branch;
+                            const maxPerSlot = (bBranch === 'sasa' ? settingsSasa : settingsMatina).maxReservationsPerSlot ?? 1;
+                            const used = bookingCountsByBranch[bBranch]?.slots?.[editData.date]?.[t] || 0;
+                            const isFull = used >= maxPerSlot && t !== confirmAction?.bookingData?.time;
+                            return <option key={t} value={t} disabled={isFull}>{t} {isFull ? '(Full)' : ''}</option>;
+                          })}
+                        </select>
+                      </div>
+
+                      <div style={{ display: 'flex', flexDirection: 'column' }}>
+                        <span style={{ fontSize: '0.8rem', fontWeight: 700, color: '#a1887f' }}>Dentist</span>
+                        <select value={editData.dentist} onChange={e => setEditData({ ...editData, dentist: e.target.value })} style={{ padding: '0.5rem', borderRadius: '8px', border: '1px solid #ccc' }}>
+                          <option value="">Any Available Dentist</option>
+                          {dentists
+                            .filter(d => d.branch === confirmAction?.bookingData?.branch || d.branch === 'both')
+                            .filter(d => !confirmAction?.bookingData?.reason || confirmAction.bookingData.reason === 'Other' || (d.services && d.services.includes(confirmAction.bookingData.reason)))
+                            .map(d => <option key={d.name} value={d.name}>{d.name}</option>)
+                          }
+                        </select>
+                      </div>
+
+                      <div style={{ display: 'flex', flexDirection: 'column' }}>
+                        <span style={{ fontSize: '0.8rem', fontWeight: 700, color: '#a1887f' }}>Reason for Edit (Sent in email)</span>
+                        <textarea value={editData.reasonForEdit} onChange={e => setEditData({ ...editData, reasonForEdit: e.target.value })} placeholder="E.g. Dr. Jane is unavailable..." style={{ padding: '0.5rem', borderRadius: '8px', border: '1px solid #ccc', minHeight: '60px' }} required></textarea>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              )}
+
               <div style={{ display: 'flex', gap: '1rem', justifyContent: 'center' }}>
-                <ActionButton 
-                  $variant="cancel" 
+                <ActionButton
+                  $variant="cancel"
                   onClick={() => setConfirmAction(null)}
                   style={{ marginTop: 0, background: '#f5f5f5', color: '#4a3728' }}
                 >
                   Go Back
                 </ActionButton>
-                <ActionButton 
+                <ActionButton
                   $variant={confirmAction.action === 'approved' ? 'approve' : 'cancel'}
                   onClick={() => {
-                    handleStatusUpdate(confirmAction.bookingId, confirmAction.action);
-                    setConfirmAction(null);
-                    if (selectedBooking) {
-                      setSelectedBooking(null);
+                    const edits = isEditMode ? editData : null;
+                    if (isEditMode && !editData.reasonForEdit.trim()) {
+                      alert("Please provide a reason for the edit.");
+                      return;
                     }
+                    handleStatusUpdate(confirmAction.bookingId, confirmAction.action, edits);
+                    setConfirmAction(null);
                   }}
                   style={{ marginTop: 0, background: confirmAction.action === 'approved' ? '#4caf50' : '#f44336' }}
                 >
@@ -992,17 +1143,17 @@ const Admin = () => {
               <p style={{ color: '#bcaaa4', fontWeight: 600, marginBottom: '2rem' }}>
                 Are you sure you want to log out of the dashboard?
               </p>
-              
+
               <div style={{ display: 'flex', gap: '1rem', justifyContent: 'center' }}>
-                <ActionButton 
-                  $variant="cancel" 
+                <ActionButton
+                  $variant="cancel"
                   onClick={() => setShowLogoutConfirm(false)}
                   style={{ marginTop: 0, background: '#f5f5f5', color: '#4a3728' }}
                 >
                   Cancel
                 </ActionButton>
-                <ActionButton 
-                  $variant="approve" 
+                <ActionButton
+                  $variant="approve"
                   onClick={confirmLogout}
                   style={{ marginTop: 0, background: '#4a3728' }}
                 >

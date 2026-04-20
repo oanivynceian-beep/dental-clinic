@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import styled, { keyframes } from 'styled-components';
 import { motion, AnimatePresence } from "framer-motion";
 import Header from '../components/Header';
-import { User, Phone, MessageSquare, Mail, CheckCircle2, ArrowRight, Loader2, ChevronLeft, ChevronRight, ChevronDown, MapPin, X, Home, CalendarPlus, Clock, Download } from 'lucide-react';
+import { User, Phone, MessageSquare, Mail, CheckCircle2, ArrowRight, Loader2, ChevronLeft, ChevronRight, ChevronDown, MapPin, X, Home, CalendarPlus, Clock, Download, Stethoscope } from 'lucide-react';
 import html2canvas from 'html2canvas';
 import { db } from './firebase';
 import {
@@ -951,7 +951,8 @@ const BookNow = () => {
     date: '',
     time: '',
     reason: '',
-    customReason: ''
+    customReason: '',
+    dentist: ''
   });
 
   // Calendar availability settings — per branch
@@ -960,6 +961,7 @@ const BookNow = () => {
   const [globalServices, setGlobalServices] = useState({ major: [], minor: [] });
   // Booking counts keyed by branch: { sasa: { totals: {}, slots: {} }, matina: { ... } }
   const [bookingCountsByBranch, setBookingCountsByBranch] = useState({ sasa: { totals: {}, slots: {} }, matina: { totals: {}, slots: {} } });
+  const [globalDentists, setGlobalDentists] = useState([]);
 
   useEffect(() => {
     // Fetch both branch settings from Firestore
@@ -1012,11 +1014,16 @@ const BookNow = () => {
       setBookingCountsByBranch(counts);
     });
 
+    const unsubDentists = onSnapshot(query(collection(db, 'dentists')), snap => {
+      setGlobalDentists(snap.docs.map(doc => ({ id: doc.id, ...doc.data() })));
+    });
+
     return () => {
       unsubSasa();
       unsubMatina();
       unsubBookings();
       unsubServices();
+      unsubDentists();
     };
   }, []);
 
@@ -1033,6 +1040,27 @@ const BookNow = () => {
       minor: [...globalServices.minor.filter(s => !disabledIds.includes(s.id)).map(s => ({ ...s, sub: formatSub(s) })), other]
     };
   }, [formData.branch, formData.date, globalServices, settingsSasa, settingsMatina]);
+
+  const dentistOptions = useMemo(() => {
+    let filtered = globalDentists;
+    if (formData.branch) {
+      filtered = filtered.filter(d => d.branch === formData.branch || d.branch === 'both');
+    }
+    if (formData.reason && formData.reason !== 'Other') {
+      filtered = filtered.filter(d => d.services && d.services.includes(formData.reason));
+    }
+    
+    return [
+      { value: '', label: 'Any Available Dentist', color: 'rgba(0,0,0,0.03)', iconColor: '#bcaaa4' },
+      ...filtered.map(d => ({
+        value: d.name,
+        label: d.name,
+        sub: d.branch ? (d.branch === 'both' ? 'Both Branches' : (d.branch === 'sasa' ? 'Sasa Branch' : 'Matina Branch')) : '',
+        color: 'rgba(74, 55, 40, 0.06)',
+        iconColor: '#4a3728'
+      }))
+    ];
+  }, [globalDentists, formData.branch, formData.reason]);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -1102,7 +1130,8 @@ const BookNow = () => {
       date: '',
       time: '',
       reason: '',
-      customReason: ''
+      customReason: '',
+      dentist: ''
     });
   };
 
@@ -1370,6 +1399,20 @@ const BookNow = () => {
               </AnimatePresence>
             </FormGroup>
 
+            <FormGroup>
+              <Label><Stethoscope size={16} /> Preferred Dentist (Optional)</Label>
+              <Subtitle style={{ fontSize: '0.8rem', margin: '0 0 0.5rem 0', color: '#bcaaa4' }}>
+                Options are filtered by your selected branch and service.
+              </Subtitle>
+              <CustomDropdown
+                value={formData.dentist}
+                onChange={(val) => setFormData(prev => ({ ...prev, dentist: val }))}
+                placeholder="Any Available Dentist"
+                options={dentistOptions}
+                icon={User}
+              />
+            </FormGroup>
+
             <SubmitButton
               type="submit"
               disabled={isLoading}
@@ -1430,6 +1473,14 @@ const BookNow = () => {
                   <span>{formData.fullName}</span>
                 </SummaryRow>
                 <SummaryRow>
+                  <span>Email</span>
+                  <span>{formData.email}</span>
+                </SummaryRow>
+                <SummaryRow>
+                  <span>Phone</span>
+                  <span>{formData.phone}</span>
+                </SummaryRow>
+                <SummaryRow>
                   <span>Branch</span>
                   <span>{getBranchLabel(formData.branch)}</span>
                 </SummaryRow>
@@ -1460,6 +1511,12 @@ const BookNow = () => {
                       return null;
                     })()}
                   </>
+                )}
+                {formData.dentist && (
+                  <SummaryRow>
+                    <span>Dentist</span>
+                    <span>{formData.dentist}</span>
+                  </SummaryRow>
                 )}
               </ModalSummary>
 
