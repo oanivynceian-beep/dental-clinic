@@ -252,6 +252,10 @@ const Header = () => {
 
         </NavItem>
 
+        <NavItem to="/my-bookings" onClick={closeMenu} $active={location.pathname === "/my-bookings"}>
+          My Bookings
+        </NavItem>
+
         <MobileButton>
           <ContactButton to="/contact" onClick={closeMenu}>
             Contact Us

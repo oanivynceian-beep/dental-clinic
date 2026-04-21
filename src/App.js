@@ -9,6 +9,7 @@ import KnowUs from "./pages/KnowUs";
 import RecentActivities from "./pages/RecentActivities";
 import Contact from "./pages/Contact";
 import BookNow from "./pages/Book";
+import MyBookings from "./pages/MyBookings";
 import Admin from "./pages/Admin";
 import AdminComments from "./pages/AdminComments";
 import AdminCalendar from "./pages/AdminCalendar";
@@ -28,6 +29,7 @@ function App() {
         <Route path="/recent-activities" element={<RecentActivities />} />
         <Route path="/contact" element={<Contact />} />
         <Route path="/book-now" element={<BookNow />} />
+        <Route path="/my-bookings" element={<MyBookings />} />
         <Route path="/admin" element={<Admin />} />
         <Route path="/admin/calendar" element={<AdminCalendar />} />
         <Route path="/admin/comments" element={<AdminComments />} />
