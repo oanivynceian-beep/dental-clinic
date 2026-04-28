@@ -988,7 +988,7 @@ const BookNow = () => {
   // Calendar availability settings — per branch
   const [settingsSasa, setSettingsSasa] = useState({ blockedDates: [], maxReservationsPerDay: 10, maxReservationsPerSlot: 1, dateCaps: {}, disabledServicesByDate: {} });
   const [settingsMatina, setSettingsMatina] = useState({ blockedDates: [], maxReservationsPerDay: 10, maxReservationsPerSlot: 1, dateCaps: {}, disabledServicesByDate: {} });
-  const [globalServices, setGlobalServices] = useState({ major: [], minor: [] });
+  const [globalServices, setGlobalServices] = useState({ major: [], minor: [], dentures: [], braces: [], veneers: [], retainers: [] });
   // Booking counts keyed by branch: { sasa: { totals: {}, slots: {} }, matina: { ... } }
   const [bookingCountsByBranch, setBookingCountsByBranch] = useState({ sasa: { totals: {}, slots: {} }, matina: { totals: {}, slots: {} } });
   const [globalDentists, setGlobalDentists] = useState([]);
@@ -1020,12 +1020,16 @@ const BookNow = () => {
       }
     });
 
-    const unsubServices = onSnapshot(query(collection(db, 'services'), orderBy('name', 'asc')), snap => {
-      const svs = snap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-      setGlobalServices({
-        major: svs.filter(s => s.type === 'major').map(s => ({ value: s.name, label: s.name, id: s.id, price: s.price })),
-        minor: svs.filter(s => s.type === 'minor').map(s => ({ value: s.name, label: s.name, id: s.id, price: s.price }))
+
+    // Fetch all services from Firestore grouped by type
+    const unsubServices = onSnapshot(query(collection(db, 'services'), orderBy('name')), snap => {
+      const grouped = { major: [], minor: [], dentures: [], braces: [], veneers: [], retainers: [] };
+      snap.docs.forEach(d => {
+        const s = { id: d.id, value: d.data().name, label: d.data().name, ...d.data() };
+        const type = s.type;
+        if (grouped[type] !== undefined) grouped[type].push(s);
       });
+      setGlobalServices(grouped);
     });
 
     // Count bookings per branch per date and slot (pending + approved only)
@@ -1065,9 +1069,16 @@ const BookNow = () => {
 
     const formatSub = (s) => s.price != null ? `₱${Number(s.price).toLocaleString('en-PH', { minimumFractionDigits: 0 })}` : undefined;
 
+    const filterAndFormat = (list) =>
+      [...list.filter(s => !disabledIds.includes(s.id)).map(s => ({ ...s, sub: formatSub(s) })), other];
+
     return {
-      major: [...globalServices.major.filter(s => !disabledIds.includes(s.id)).map(s => ({ ...s, sub: formatSub(s) })), other],
-      minor: [...globalServices.minor.filter(s => !disabledIds.includes(s.id)).map(s => ({ ...s, sub: formatSub(s) })), other]
+      major: filterAndFormat(globalServices.major),
+      minor: filterAndFormat(globalServices.minor),
+      dentures: filterAndFormat(globalServices.dentures),
+      braces: filterAndFormat(globalServices.braces),
+      veneers: filterAndFormat(globalServices.veneers),
+      retainers: filterAndFormat(globalServices.retainers),
     };
   }, [formData.branch, formData.date, globalServices, settingsSasa, settingsMatina]);
 
@@ -1392,6 +1403,62 @@ const BookNow = () => {
                       ...opt,
                       color: 'rgba(74, 55, 40, 0.06)',
                       iconColor: '#4a3728'
+                    }))}
+                    icon={MessageSquare}
+                  />
+                </FormGroup>
+                <FormGroup style={{ marginBottom: 0 }}>
+                  <Label style={{ fontSize: '0.8rem', color: '#a1887f' }}>Dentures</Label>
+                  <CustomDropdown
+                    value={availableServices.dentures.some(s => s.value === formData.reason) ? formData.reason : ''}
+                    onChange={(val) => setFormData(prev => ({ ...prev, reason: val }))}
+                    placeholder="Select Dentures Service"
+                    options={availableServices.dentures.map(opt => ({
+                      ...opt,
+                      color: 'rgba(76, 175, 80, 0.06)',
+                      iconColor: '#4caf50'
+                    }))}
+                    icon={MessageSquare}
+                  />
+                </FormGroup>
+                <FormGroup style={{ marginBottom: 0 }}>
+                  <Label style={{ fontSize: '0.8rem', color: '#a1887f' }}>Braces</Label>
+                  <CustomDropdown
+                    value={availableServices.braces.some(s => s.value === formData.reason) ? formData.reason : ''}
+                    onChange={(val) => setFormData(prev => ({ ...prev, reason: val }))}
+                    placeholder="Select Braces Service"
+                    options={availableServices.braces.map(opt => ({
+                      ...opt,
+                      color: 'rgba(33, 150, 243, 0.06)',
+                      iconColor: '#2196f3'
+                    }))}
+                    icon={MessageSquare}
+                  />
+                </FormGroup>
+                <FormGroup style={{ marginBottom: 0 }}>
+                  <Label style={{ fontSize: '0.8rem', color: '#a1887f' }}>Veneers</Label>
+                  <CustomDropdown
+                    value={availableServices.veneers.some(s => s.value === formData.reason) ? formData.reason : ''}
+                    onChange={(val) => setFormData(prev => ({ ...prev, reason: val }))}
+                    placeholder="Select Veneers Service"
+                    options={availableServices.veneers.map(opt => ({
+                      ...opt,
+                      color: 'rgba(156, 39, 176, 0.06)',
+                      iconColor: '#9c27b0'
+                    }))}
+                    icon={MessageSquare}
+                  />
+                </FormGroup>
+                <FormGroup style={{ marginBottom: 0 }}>
+                  <Label style={{ fontSize: '0.8rem', color: '#a1887f' }}>Retainers</Label>
+                  <CustomDropdown
+                    value={availableServices.retainers.some(s => s.value === formData.reason) ? formData.reason : ''}
+                    onChange={(val) => setFormData(prev => ({ ...prev, reason: val }))}
+                    placeholder="Select Retainers Service"
+                    options={availableServices.retainers.map(opt => ({
+                      ...opt,
+                      color: 'rgba(255, 152, 0, 0.06)',
+                      iconColor: '#ff9800'
                     }))}
                     icon={MessageSquare}
                   />

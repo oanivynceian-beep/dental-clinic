@@ -585,7 +585,11 @@ const AdminServices = () => {
 
   const majorServices = filteredServices.filter(s => s.type === 'major');
   const minorServices = filteredServices.filter(s => s.type === 'minor');
-  const otherServices = filteredServices.filter(s => s.type !== 'major' && s.type !== 'minor');
+
+  const denturesServices = filteredServices.filter(s => s.type === 'dentures');
+  const bracesServices = filteredServices.filter(s => s.type === 'braces');
+  const veneersServices = filteredServices.filter(s => s.type === 'veneers');
+  const retainersServices = filteredServices.filter(s => s.type === 'retainers');
 
   /* ---------- Auth View ---------- */
   if (!isAuthorized) {
@@ -834,21 +838,105 @@ const AdminServices = () => {
             </ServiceList>
           </Panel>
 
-          {/* Other Services */}
+          {/* Dentures Services */}
           <Panel initial={{ opacity: 0, x: 0 }} animate={{ opacity: 1, x: 0 }}>
-            <PanelTitle><DollarSign size={18} /> Other Services ({otherServices.length})</PanelTitle>
-            <PanelSubtitle>Additional service categories.</PanelSubtitle>
+            <PanelTitle><Stethoscope size={18} color="#4caf50" /> Dentures ({denturesServices.length})</PanelTitle>
+            <PanelSubtitle>Dental prosthetics and removable options.</PanelSubtitle>
             <ServiceList>
-              {otherServices.length === 0 ? (
-                <EmptyState>No other services found.</EmptyState>
+              {denturesServices.length === 0 ? (
+                <EmptyState>No denture services found.</EmptyState>
               ) : (
                 <AnimatePresence>
-                  {otherServices.map(s => (
+                  {denturesServices.map(s => (
                     <ServiceItem key={s.id} layout initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
                       <ServiceInfo>
                         <ServiceName>{s.name}</ServiceName>
                         <ServiceMeta>
-                          <ServiceType>{s.type.charAt(0).toUpperCase() + s.type.slice(1)} Service</ServiceType>
+                          <ServiceType>Dentures Service</ServiceType>
+                          {s.price != null && <ServicePrice>₱{Number(s.price).toLocaleString('en-PH', { minimumFractionDigits: 0 })}</ServicePrice>}
+                        </ServiceMeta>
+                      </ServiceInfo>
+                      <IconButton $variant="danger" onClick={() => handleDeleteService(s.id)} whileHover={{ scale: 1.1 }} whileTap={{ scale: 0.9 }}>
+                        <Trash2 size={16} />
+                      </IconButton>
+                    </ServiceItem>
+                  ))}
+                </AnimatePresence>
+              )}
+            </ServiceList>
+          </Panel>
+
+          {/* Braces Services */}
+          <Panel initial={{ opacity: 0, x: 0 }} animate={{ opacity: 1, x: 0 }}>
+            <PanelTitle><Stethoscope size={18} color="#4caf50" /> Braces ({bracesServices.length})</PanelTitle>
+            <PanelSubtitle>Orthodontic brace options.</PanelSubtitle>
+            <ServiceList>
+              {bracesServices.length === 0 ? (
+                <EmptyState>No braces services found.</EmptyState>
+              ) : (
+                <AnimatePresence>
+                  {bracesServices.map(s => (
+                    <ServiceItem key={s.id} layout initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
+                      <ServiceInfo>
+                        <ServiceName>{s.name}</ServiceName>
+                        <ServiceMeta>
+                          <ServiceType>Braces Service</ServiceType>
+                          {s.price != null && <ServicePrice>₱{Number(s.price).toLocaleString('en-PH', { minimumFractionDigits: 0 })}</ServicePrice>}
+                        </ServiceMeta>
+                      </ServiceInfo>
+                      <IconButton $variant="danger" onClick={() => handleDeleteService(s.id)} whileHover={{ scale: 1.1 }} whileTap={{ scale: 0.9 }}>
+                        <Trash2 size={16} />
+                      </IconButton>
+                    </ServiceItem>
+                  ))}
+                </AnimatePresence>
+              )}
+            </ServiceList>
+          </Panel>
+
+          {/* Veneers Services */}
+          <Panel initial={{ opacity: 0, x: 0 }} animate={{ opacity: 1, x: 0 }}>
+            <PanelTitle><Stethoscope size={18} color="#4caf50" /> Veneers ({veneersServices.length})</PanelTitle>
+            <PanelSubtitle>Cosmetic veneer options.</PanelSubtitle>
+            <ServiceList>
+              {veneersServices.length === 0 ? (
+                <EmptyState>No veneers services found.</EmptyState>
+              ) : (
+                <AnimatePresence>
+                  {veneersServices.map(s => (
+                    <ServiceItem key={s.id} layout initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
+                      <ServiceInfo>
+                        <ServiceName>{s.name}</ServiceName>
+                        <ServiceMeta>
+                          <ServiceType>Veneers Service</ServiceType>
+                          {s.price != null && <ServicePrice>₱{Number(s.price).toLocaleString('en-PH', { minimumFractionDigits: 0 })}</ServicePrice>}
+                        </ServiceMeta>
+                      </ServiceInfo>
+                      <IconButton $variant="danger" onClick={() => handleDeleteService(s.id)} whileHover={{ scale: 1.1 }} whileTap={{ scale: 0.9 }}>
+                        <Trash2 size={16} />
+                      </IconButton>
+                    </ServiceItem>
+                  ))}
+                </AnimatePresence>
+              )}
+            </ServiceList>
+          </Panel>
+
+          {/* Retainers Services */}
+          <Panel initial={{ opacity: 0, x: 0 }} animate={{ opacity: 1, x: 0 }}>
+            <PanelTitle><Stethoscope size={18} color="#4caf50" /> Retainers ({retainersServices.length})</PanelTitle>
+            <PanelSubtitle>Retention appliances.</PanelSubtitle>
+            <ServiceList>
+              {retainersServices.length === 0 ? (
+                <EmptyState>No retainers services found.</EmptyState>
+              ) : (
+                <AnimatePresence>
+                  {retainersServices.map(s => (
+                    <ServiceItem key={s.id} layout initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
+                      <ServiceInfo>
+                        <ServiceName>{s.name}</ServiceName>
+                        <ServiceMeta>
+                          <ServiceType>Retainers Service</ServiceType>
                           {s.price != null && <ServicePrice>₱{Number(s.price).toLocaleString('en-PH', { minimumFractionDigits: 0 })}</ServicePrice>}
                         </ServiceMeta>
                       </ServiceInfo>
