@@ -1,7 +1,7 @@
 import React, { useState, useRef, useEffect, useMemo } from 'react';
 import styled from 'styled-components';
 import { motion, AnimatePresence } from "framer-motion";
-import { ChevronRight, ChevronLeft, Loader2, Lock, LogIn, Eye, EyeOff, LayoutGrid, List, X } from 'lucide-react';
+import { ChevronRight, ChevronLeft, Loader2, Lock, LogIn, Eye, EyeOff, LayoutGrid, List, X, Bell } from 'lucide-react';
 import { db } from './firebase';
 import { collection, onSnapshot, query, orderBy, updateDoc, doc } from 'firebase/firestore';
 import { useNavigate } from 'react-router-dom';
@@ -366,6 +366,39 @@ const CloseButton = styled.button`
   }
 `;
 
+const ToastContainer = styled.div`
+  position: fixed;
+  bottom: 2rem;
+  right: 2rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  z-index: 9999;
+`;
+
+const ToastBody = styled(motion.div)`
+  background: white;
+  border-left: 5px solid #4a3728;
+  border-radius: 12px;
+  padding: 1rem 1.5rem;
+  box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  min-width: 300px;
+`;
+
+const ToastIcon = styled.div`
+  background: #fdfaf7;
+  color: #4a3728;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+`;
+
 const formatBookingDate = (dateString) => {
   if (!dateString) return '';
   const parts = dateString.split('-');
@@ -382,6 +415,41 @@ const ACCOUNTS = {
   'admin123': 'superadmin',
   'matina123': 'matina',
   'sasa123': 'sasa'
+};
+
+const playNotificationSound = () => {
+  try {
+    const AudioContext = window.AudioContext || window.webkitAudioContext;
+    if (!AudioContext) return;
+    const ctx = new AudioContext();
+    
+    // Play a nice melodic chime (C5, E5, G5, C6)
+    const playNote = (frequency, startTime, duration) => {
+      const osc = ctx.createOscillator();
+      const gainNode = ctx.createGain();
+      
+      osc.type = 'sine';
+      osc.frequency.value = frequency;
+      
+      gainNode.gain.setValueAtTime(0, startTime);
+      gainNode.gain.linearRampToValueAtTime(0.3, startTime + duration * 0.1);
+      gainNode.gain.exponentialRampToValueAtTime(0.01, startTime + duration);
+      
+      osc.connect(gainNode);
+      gainNode.connect(ctx.destination);
+      
+      osc.start(startTime);
+      osc.stop(startTime + duration);
+    };
+
+    const now = ctx.currentTime;
+    playNote(523.25, now, 0.4);       // C5
+    playNote(659.25, now + 0.15, 0.4); // E5
+    playNote(783.99, now + 0.3, 0.4);  // G5
+    playNote(1046.50, now + 0.45, 0.6); // C6
+  } catch (err) {
+    console.error("Audio play failed:", err);
+  }
 };
 
 const Admin = () => {
@@ -401,6 +469,10 @@ const Admin = () => {
   const [commentsCount, setCommentsCount] = useState(0);
   const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
   const [confirmAction, setConfirmAction] = useState(null);
+  const [notifications, setNotifications] = useState([]);
+  const [toastNotifications, setToastNotifications] = useState([]);
+  const [showNotificationsModal, setShowNotificationsModal] = useState(false);
+  const [unreadCount, setUnreadCount] = useState(0);
 
   // New state for Edit Mode
   const [settingsSasa, setSettingsSasa] = useState({ blockedDates: [], dateCaps: {}, maxReservationsPerDay: 10, maxReservationsPerSlot: 1 });
@@ -411,6 +483,7 @@ const Admin = () => {
 
   const navigate = useNavigate();
   const sliderRef = useRef(null);
+  const initialLoadRef = useRef(true);
 
   const TIME_SLOTS = [
     '09:00 AM', '10:00 AM', '11:00 AM', '12:00 PM',
@@ -468,12 +541,40 @@ const Admin = () => {
   useEffect(() => {
     if (!isAuthorized) return;
 
+    initialLoadRef.current = true;
+
     const q = query(
       collection(db, 'bookings'),
       orderBy('createdAt', 'desc')
     );
 
     const unsubscribe = onSnapshot(q, (snapshot) => {
+      if (!initialLoadRef.current) {
+        const newDocChanges = snapshot.docChanges().filter(change => change.type === 'added');
+        if (newDocChanges.length > 0) {
+          playNotificationSound();
+          
+          const newNotifs = newDocChanges.map(change => {
+            const data = change.doc.data();
+            return {
+              id: change.doc.id,
+              name: data.fullName || 'New Patient',
+              time: Date.now()
+            };
+          });
+
+          setNotifications(prev => [...newNotifs, ...prev]);
+          setToastNotifications(prev => [...prev, ...newNotifs]);
+          setUnreadCount(prev => prev + newNotifs.length);
+
+          setTimeout(() => {
+            setToastNotifications(prev => prev.filter(n => !newNotifs.find(nn => nn.id === n.id)));
+          }, 5000);
+        }
+      } else {
+        initialLoadRef.current = false;
+      }
+
       const bookingsData = snapshot.docs.map(doc => ({
         id: doc.id,
         ...doc.data()
@@ -754,6 +855,29 @@ const Admin = () => {
                 Logout
               </button>
             </div>
+          </div>
+          
+          <div style={{ position: 'relative' }}>
+            <button 
+              onClick={() => { setShowNotificationsModal(true); setUnreadCount(0); }} 
+              style={{ background: 'white', border: 'none', padding: '1rem', borderRadius: '50%', boxShadow: '0 5px 15px rgba(0,0,0,0.05)', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', transition: 'transform 0.2s' }}
+              onMouseEnter={(e) => e.currentTarget.style.transform = 'scale(1.05)'}
+              onMouseLeave={(e) => e.currentTarget.style.transform = 'scale(1)'}
+            >
+              <Bell size={24} color="#4a3728" />
+              <AnimatePresence>
+                {unreadCount > 0 && (
+                  <motion.div 
+                    initial={{ scale: 0 }}
+                    animate={{ scale: 1 }}
+                    exit={{ scale: 0 }}
+                    style={{ position: 'absolute', top: '-5px', right: '-5px', background: '#f44336', color: 'white', fontSize: '0.75rem', fontWeight: 900, width: '24px', height: '24px', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', border: '3px solid #f5f5f5' }}
+                  >
+                    {unreadCount > 9 ? '9+' : unreadCount}
+                  </motion.div>
+                )}
+              </AnimatePresence>
+            </button>
           </div>
         </Header>
 
@@ -1164,6 +1288,95 @@ const Admin = () => {
           </ModalOverlay>
         )}
       </AnimatePresence>
+
+      <AnimatePresence>
+        {showNotificationsModal && (
+          <ModalOverlay
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            onClick={() => setShowNotificationsModal(false)}
+            style={{ zIndex: 3000, justifyContent: 'flex-end', padding: 0 }}
+          >
+            <ModalContainer
+              initial={{ x: '100%' }}
+              animate={{ x: 0 }}
+              exit={{ x: '100%' }}
+              transition={{ type: 'spring', bounce: 0, duration: 0.4 }}
+              onClick={e => e.stopPropagation()}
+              style={{ 
+                height: '100vh', 
+                maxHeight: '100vh', 
+                width: '400px', 
+                maxWidth: '100%', 
+                borderRadius: '30px 0 0 30px',
+                padding: '2.5rem',
+                display: 'flex',
+                flexDirection: 'column'
+              }}
+            >
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '2rem', flexShrink: 0 }}>
+                <div>
+                  <h2 style={{ fontSize: '1.8rem', fontWeight: 900, color: '#4a3728', margin: 0 }}>
+                    Notifications
+                  </h2>
+                  <p style={{ margin: '0.25rem 0 0 0', color: '#bcaaa4', fontSize: '0.9rem', fontWeight: 600 }}>Recent booking activity</p>
+                </div>
+                <CloseButton onClick={() => setShowNotificationsModal(false)} style={{ position: 'static' }}>
+                  <X size={20} />
+                </CloseButton>
+              </div>
+
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem', overflowY: 'auto', flex: 1, paddingRight: '0.5rem' }}>
+                {notifications.length === 0 ? (
+                  <div style={{ textAlign: 'center', marginTop: '4rem', color: '#bcaaa4' }}>
+                    <Bell size={48} style={{ opacity: 0.2, marginBottom: '1rem' }} />
+                    <p style={{ fontWeight: 600 }}>No notifications yet.</p>
+                  </div>
+                ) : (
+                  notifications.map(notif => (
+                    <div key={notif.id} style={{ background: '#fdfaf7', padding: '1.25rem', borderRadius: '20px', display: 'flex', gap: '1rem', alignItems: 'flex-start', border: '1px solid #f0e6e1' }}>
+                      <div style={{ background: '#e8f5e9', padding: '0.75rem', borderRadius: '50%', color: '#4caf50', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                        <Bell size={20} />
+                      </div>
+                      <div>
+                        <h4 style={{ margin: '0 0 0.25rem 0', color: '#4a3728', fontWeight: 800, fontSize: '1rem' }}>New Booking</h4>
+                        <p style={{ margin: 0, fontSize: '0.9rem', color: '#795548', fontWeight: 600, lineHeight: 1.4 }}>
+                          <span style={{ color: '#4a3728', fontWeight: 800 }}>{notif.name}</span> has submitted a new appointment request.
+                        </p>
+                        <span style={{ fontSize: '0.8rem', color: '#bcaaa4', marginTop: '0.5rem', display: 'block', fontWeight: 700 }}>
+                          {new Date(notif.time).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                        </span>
+                      </div>
+                    </div>
+                  ))
+                )}
+              </div>
+            </ModalContainer>
+          </ModalOverlay>
+        )}
+      </AnimatePresence>
+
+      <ToastContainer>
+        <AnimatePresence>
+          {toastNotifications.map(notif => (
+            <ToastBody
+              key={notif.id}
+              initial={{ opacity: 0, x: 50 }}
+              animate={{ opacity: 1, x: 0 }}
+              exit={{ opacity: 0, scale: 0.9 }}
+            >
+              <ToastIcon>
+                <Bell size={20} />
+              </ToastIcon>
+              <div>
+                <h4 style={{ margin: 0, color: '#4a3728', fontWeight: 800 }}>New Booking Received!</h4>
+                <p style={{ margin: 0, fontSize: '0.9rem', color: '#bcaaa4', fontWeight: 600 }}>{notif.name} just booked an appointment.</p>
+              </div>
+            </ToastBody>
+          ))}
+        </AnimatePresence>
+      </ToastContainer>
 
     </AdminContainer>
   );

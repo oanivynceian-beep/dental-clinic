@@ -409,6 +409,30 @@ const DEFAULT_MINOR = [
   "ORAL PROPHYLAXIS (CLEANING)", "TEMPORARY CROWNS"
 ];
 
+// New service categories
+const DEFAULT_DENTURES = [
+  "REMOVABLE DENTURE - Plastic - 2000 per missing tooth",
+  "REMOVABLE DENTURE - Porcelain - 2500 per missing tooth",
+  "FULL DENTURE (ORDINARY) - 13000 per arch",
+  "IVOCAP - 25000 per arch"
+];
+
+const DEFAULT_BRACES = [
+  "BRACES PACKAGE - Upper and Lower - 45000",
+  "BRACES PACKAGE - Upper or Lower only - 25000"
+];
+
+const DEFAULT_VENEERS = [
+  "VENEERS COMPOSITE OR DIRECT - 4500 per tooth",
+  "VENEERS EMAX - 20000 per tooth",
+  "VENEERS ZIRCONIA - 25000 per tooth"
+];
+
+const DEFAULT_RETENTERS = [
+  "HAWLEY'S RETAINERS - 7000 per arch",
+  "CLEAR RETAINERS - 10000 per arch"
+];
+
 /* ========================
    Main Component
 ======================== */
@@ -511,14 +535,40 @@ const AdminServices = () => {
     if (!window.confirm('Initialize with default services? This will overwrite nothing but add to the list.')) return;
     setIsLoading(true);
     try {
+      // Add major services
       for (const s of DEFAULT_MAJOR) {
         if (!services.some(ex => ex.name === s)) {
           await addDoc(collection(db, 'services'), { name: s, type: 'major' });
         }
       }
+      // Add minor services
       for (const s of DEFAULT_MINOR) {
         if (!services.some(ex => ex.name === s)) {
           await addDoc(collection(db, 'services'), { name: s, type: 'minor' });
+        }
+      }
+      // Add denture services
+      for (const s of DEFAULT_DENTURES) {
+        if (!services.some(ex => ex.name === s)) {
+          await addDoc(collection(db, 'services'), { name: s, type: 'dentures' });
+        }
+      }
+      // Add braces services
+      for (const s of DEFAULT_BRACES) {
+        if (!services.some(ex => ex.name === s)) {
+          await addDoc(collection(db, 'services'), { name: s, type: 'braces' });
+        }
+      }
+      // Add veneers services
+      for (const s of DEFAULT_VENEERS) {
+        if (!services.some(ex => ex.name === s)) {
+          await addDoc(collection(db, 'services'), { name: s, type: 'veneers' });
+        }
+      }
+      // Add retainers services
+      for (const s of DEFAULT_RETENTERS) {
+        if (!services.some(ex => ex.name === s)) {
+          await addDoc(collection(db, 'services'), { name: s, type: 'retainers' });
         }
       }
       showMsg('Initialized defaults');
@@ -535,6 +585,7 @@ const AdminServices = () => {
 
   const majorServices = filteredServices.filter(s => s.type === 'major');
   const minorServices = filteredServices.filter(s => s.type === 'minor');
+  const otherServices = filteredServices.filter(s => s.type !== 'major' && s.type !== 'minor');
 
   /* ---------- Auth View ---------- */
   if (!isAuthorized) {
@@ -649,11 +700,11 @@ const AdminServices = () => {
             </div>
 
             <SelectionContainer>
-              <SelectTrigger 
-                type="button" 
+              <SelectTrigger
+                type="button"
                 onClick={() => setShowTypeDropdown(!showTypeDropdown)}
               >
-                {newServiceType === 'major' ? 'Major Service' : 'Minor Service'}
+                      { { major: 'Major Service', minor: 'Minor Service', dentures: 'Dentures', braces: 'Braces', veneers: 'Veneers', retainers: 'Retainers' }[newServiceType] }
                 <ChevronDown size={14} style={{ transform: showTypeDropdown ? 'rotate(180deg)' : 'none', transition: '0.2s' }} />
               </SelectTrigger>
               <AnimatePresence>
@@ -663,19 +714,47 @@ const AdminServices = () => {
                     animate={{ opacity: 1, y: 0 }}
                     exit={{ opacity: 0, y: -10 }}
                   >
-                    <SelectOption 
-                      type="button" 
+                    <SelectOption
+                      type="button"
                       $isSelected={newServiceType === 'major'}
                       onClick={() => { setNewServiceType('major'); setShowTypeDropdown(false); }}
                     >
                       Major Service
                     </SelectOption>
-                    <SelectOption 
-                      type="button" 
+                    <SelectOption
+                      type="button"
                       $isSelected={newServiceType === 'minor'}
                       onClick={() => { setNewServiceType('minor'); setShowTypeDropdown(false); }}
                     >
                       Minor Service
+                    </SelectOption>
+                    <SelectOption
+                      type="button"
+                      $isSelected={newServiceType === 'dentures'}
+                      onClick={() => { setNewServiceType('dentures'); setShowTypeDropdown(false); }}
+                    >
+                      Dentures
+                    </SelectOption>
+                    <SelectOption
+                      type="button"
+                      $isSelected={newServiceType === 'braces'}
+                      onClick={() => { setNewServiceType('braces'); setShowTypeDropdown(false); }}
+                    >
+                      Braces
+                    </SelectOption>
+                    <SelectOption
+                      type="button"
+                      $isSelected={newServiceType === 'veneers'}
+                      onClick={() => { setNewServiceType('veneers'); setShowTypeDropdown(false); }}
+                    >
+                      Veneers
+                    </SelectOption>
+                    <SelectOption
+                      type="button"
+                      $isSelected={newServiceType === 'retainers'}
+                      onClick={() => { setNewServiceType('retainers'); setShowTypeDropdown(false); }}
+                    >
+                      Retainers
                     </SelectOption>
                   </SelectMenu>
                 )}
@@ -742,6 +821,34 @@ const AdminServices = () => {
                         <ServiceName>{s.name}</ServiceName>
                         <ServiceMeta>
                           <ServiceType>Minor Procedure</ServiceType>
+                          {s.price != null && <ServicePrice>₱{Number(s.price).toLocaleString('en-PH', { minimumFractionDigits: 0 })}</ServicePrice>}
+                        </ServiceMeta>
+                      </ServiceInfo>
+                      <IconButton $variant="danger" onClick={() => handleDeleteService(s.id)} whileHover={{ scale: 1.1 }} whileTap={{ scale: 0.9 }}>
+                        <Trash2 size={16} />
+                      </IconButton>
+                    </ServiceItem>
+                  ))}
+                </AnimatePresence>
+              )}
+            </ServiceList>
+          </Panel>
+
+          {/* Other Services */}
+          <Panel initial={{ opacity: 0, x: 0 }} animate={{ opacity: 1, x: 0 }}>
+            <PanelTitle><DollarSign size={18} /> Other Services ({otherServices.length})</PanelTitle>
+            <PanelSubtitle>Additional service categories.</PanelSubtitle>
+            <ServiceList>
+              {otherServices.length === 0 ? (
+                <EmptyState>No other services found.</EmptyState>
+              ) : (
+                <AnimatePresence>
+                  {otherServices.map(s => (
+                    <ServiceItem key={s.id} layout initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
+                      <ServiceInfo>
+                        <ServiceName>{s.name}</ServiceName>
+                        <ServiceMeta>
+                          <ServiceType>{s.type.charAt(0).toUpperCase() + s.type.slice(1)} Service</ServiceType>
                           {s.price != null && <ServicePrice>₱{Number(s.price).toLocaleString('en-PH', { minimumFractionDigits: 0 })}</ServicePrice>}
                         </ServiceMeta>
                       </ServiceInfo>

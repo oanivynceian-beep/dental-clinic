@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import styled from 'styled-components';
 import { motion, AnimatePresence } from "framer-motion";
-import { ChevronRight, ChevronLeft, Loader2, Lock, LogIn, Eye, EyeOff, X, Mail, AlertCircle, CheckCircle2 } from 'lucide-react';
+import { ChevronRight, ChevronLeft, Loader2, Lock, LogIn, Eye, EyeOff, X, Mail, AlertCircle, CheckCircle2, Download } from 'lucide-react';
 import emailjs from '@emailjs/browser';
 import { db } from './firebase';
 import { collection, onSnapshot, query, orderBy } from 'firebase/firestore';
@@ -465,6 +465,48 @@ const AdminCalendar = () => {
     setCurrentDate(new Date());
   };
 
+  const downloadMonthlyExcel = () => {
+    const currentYear = currentDate.getFullYear();
+    const currentMonth = currentDate.getMonth();
+
+    const monthlyBookings = filteredBookings.filter(b => {
+      if (isNaN(b.parsedDate)) return false;
+      return b.parsedDate.getFullYear() === currentYear && b.parsedDate.getMonth() === currentMonth;
+    });
+
+    if (monthlyBookings.length === 0) {
+      showToast('No bookings found for this month.', true);
+      return;
+    }
+
+    const headers = ['Date', 'Time', 'Patient Name', 'Phone', 'Email', 'Reason', 'Branch', 'Status'];
+    const csvRows = [headers.join(',')];
+
+    monthlyBookings.forEach(b => {
+      const row = [
+        b.date || '',
+        b.time || '',
+        `"${(b.fullName || '').replace(/"/g, '""')}"`,
+        `"${(b.phone || '').replace(/"/g, '""')}"`,
+        `"${(b.email || '').replace(/"/g, '""')}"`,
+        `"${(b.reason || 'General Check-up').replace(/"/g, '""')}"`,
+        `"${(b.branch || '').replace(/"/g, '""')}"`,
+        `"${(b.status || '').replace(/"/g, '""')}"`
+      ];
+      csvRows.push(row.join(','));
+    });
+
+    const csvData = csvRows.join('\n');
+    const blob = new Blob([csvData], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.setAttribute('download', `Bookings_${currentYear}_${currentMonth + 1}.csv`);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
+
   const filteredBookings = bookings.filter(b => {
     if (adminRole === 'superadmin') return true;
     return b.branch && b.branch.toLowerCase() === adminRole;
@@ -496,10 +538,18 @@ const AdminCalendar = () => {
         year: 'numeric'
       });
 
+      const approvedBookings = dayBookings.filter(booking => booking.status === 'approved' || booking.status === 'accepted');
+
+      if (approvedBookings.length === 0) {
+        showToast('No accepted/approved bookings found to remind.', true);
+        setIsSendingReminders(false);
+        return;
+      }
+
       let sentCount = 0;
 
       // Send email to each patient
-      for (const booking of dayBookings) {
+      for (const booking of approvedBookings) {
         try {
           const templateParams = {
             email: booking.email,
@@ -714,7 +764,16 @@ const AdminCalendar = () => {
                 </ControlButton>
               </div>
 
-              <div style={{ display: 'flex', alignItems: 'center' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
+                <button
+                  onClick={downloadMonthlyExcel}
+                  style={{ background: '#e8f5e9', border: '1px solid #c8e6c9', padding: '0.5rem 1rem', borderRadius: '10px', fontSize: '0.9rem', fontWeight: 800, color: '#2e7d32', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '0.5rem', transition: 'all 0.2s' }}
+                  onMouseEnter={(e) => { e.currentTarget.style.background = '#c8e6c9'; }}
+                  onMouseLeave={(e) => { e.currentTarget.style.background = '#e8f5e9'; }}
+                >
+                  <Download size={18} />
+                  Export CSV
+                </button>
                 <button
                   onClick={jumpToToday}
                   style={{ background: '#f5f5f5', border: 'none', padding: '0.5rem 1rem', borderRadius: '10px', fontSize: '0.9rem', fontWeight: 800, color: '#4a3728', cursor: 'pointer' }}

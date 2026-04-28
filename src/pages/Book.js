@@ -354,6 +354,34 @@ const SubmitButton = styled(motion.button)`
   }
 `;
 
+const TermsCheckboxContainer = styled.div`
+  display: flex;
+  align-items: flex-start;
+  gap: 1rem;
+  margin-top: 1rem;
+`;
+
+const Checkbox = styled.input`
+  margin-top: 0.25rem;
+  width: 1.25rem;
+  height: 1.25rem;
+  cursor: pointer;
+  accent-color: #4a3728;
+`;
+
+const TermsText = styled.p`
+  font-size: 0.9rem;
+  color: #6d4c41;
+  line-height: 1.4;
+`;
+
+const TermsLink = styled.span`
+  color: #4a3728;
+  font-weight: 800;
+  text-decoration: underline;
+  cursor: pointer;
+`;
+
 /* ========================
    Success Modal Styles
 ======================== */
@@ -943,6 +971,8 @@ const BookNow = () => {
   const navigate = useNavigate();
   const [isSubmitted, setIsSubmitted] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  const [agreedToTerms, setAgreedToTerms] = useState(false);
+  const [showTermsModal, setShowTermsModal] = useState(false);
   const [formData, setFormData] = useState({
     fullName: '',
     email: '',
@@ -1122,6 +1152,7 @@ const BookNow = () => {
 
   const handleBookAnother = () => {
     setIsSubmitted(false);
+    setAgreedToTerms(false);
     setFormData({
       fullName: '',
       email: '',
@@ -1413,11 +1444,25 @@ const BookNow = () => {
               />
             </FormGroup>
 
+            <TermsCheckboxContainer>
+              <Checkbox
+                type="checkbox"
+                id="terms"
+                checked={agreedToTerms}
+                onChange={(e) => setAgreedToTerms(e.target.checked)}
+              />
+              <TermsText>
+                By proceeding, you agree to our{' '}
+                <TermsLink onClick={() => setShowTermsModal(true)}>Terms & Conditions</TermsLink>.
+              </TermsText>
+            </TermsCheckboxContainer>
+
             <SubmitButton
               type="submit"
-              disabled={isLoading}
-              whileHover={{ scale: 1.02, y: -2 }}
-              whileTap={{ scale: 0.98 }}
+              disabled={isLoading || !agreedToTerms}
+              whileHover={(!isLoading && agreedToTerms) ? { scale: 1.02, y: -2 } : {}}
+              whileTap={(!isLoading && agreedToTerms) ? { scale: 0.98 } : {}}
+              style={{ opacity: (!isLoading && agreedToTerms) ? 1 : 0.6 }}
             >
               {isLoading ? (
                 <>
@@ -1563,6 +1608,51 @@ const BookNow = () => {
                   whileTap={{ scale: 0.98 }}
                 >
                   <Home size={18} /> Go Home
+                </ModalButton>
+              </ModalActions>
+            </ModalCard>
+          </ModalBackdrop>
+        )}
+      </AnimatePresence>
+      <AnimatePresence>
+        {showTermsModal && (
+          <ModalBackdrop
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.3 }}
+            onClick={() => setShowTermsModal(false)}
+          >
+            <ModalCard
+              initial={{ opacity: 0, scale: 0.85, y: 30 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.85, y: 30 }}
+              transition={{ type: 'spring', damping: 25, stiffness: 300 }}
+              onClick={(e) => e.stopPropagation()}
+            >
+              <ModalCloseButton onClick={() => setShowTermsModal(false)}>
+                <X size={16} />
+              </ModalCloseButton>
+              <ModalTitle>Terms & Conditions</ModalTitle>
+              <div style={{ textAlign: 'left', marginTop: '1.5rem', maxHeight: '50vh', overflowY: 'auto', paddingRight: '1rem', color: '#6d4c41', fontSize: '0.95rem', lineHeight: '1.6' }}>
+                <h4 style={{ color: '#4a3728', fontWeight: '800', marginBottom: '0.5rem' }}>1. Appointment Policy</h4>
+                <p style={{ marginBottom: '1rem' }}>Please arrive at least 10 minutes before your scheduled time. Late arrivals may need to be rescheduled to accommodate other patients.</p>
+                <h4 style={{ color: '#4a3728', fontWeight: '800', marginBottom: '0.5rem' }}>2. Cancellation Policy</h4>
+                <p style={{ marginBottom: '1rem' }}>If you need to cancel or modify your booking, please do so at least 24 hours prior to your appointment time.</p>
+                <h4 style={{ color: '#4a3728', fontWeight: '800', marginBottom: '0.5rem' }}>3. Data Privacy</h4>
+                <p style={{ marginBottom: '1rem' }}>Your personal data will be kept strictly confidential and will only be used by Dr. A Dental Clinic for the purposes of your dental care and related communication.</p>
+                <h4 style={{ color: '#4a3728', fontWeight: '800', marginBottom: '0.5rem' }}>4. Medical History</h4>
+                <p>You agree to provide accurate and complete medical history to ensure safe and effective dental treatment.</p>
+              </div>
+              <ModalActions style={{ marginTop: '2rem' }}>
+                <ModalButton
+                  type="button"
+                  onClick={() => {
+                    setAgreedToTerms(true);
+                    setShowTermsModal(false);
+                  }}
+                >
+                  I Agree
                 </ModalButton>
               </ModalActions>
             </ModalCard>
