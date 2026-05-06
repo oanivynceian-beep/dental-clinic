@@ -34,6 +34,13 @@ const Header = styled.div`
   justify-content: space-between;
   align-items: center;
   margin-bottom: 3rem;
+  flex-wrap: wrap;
+  gap: 1rem;
+
+  @media (max-width: 768px) {
+    justify-content: center;
+    text-align: center;
+  }
 `;
 
 const DashboardTitle = styled.h1`
@@ -399,6 +406,62 @@ const ToastIcon = styled.div`
   justify-content: center;
 `;
 
+const ClockContainer = styled.div`
+  background: white;
+  border-radius: 20px;
+  padding: 1rem 1.5rem;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.03);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  min-width: 200px;
+
+  @media (max-width: 1024px) {
+    padding: 0.75rem 1rem;
+    min-width: 160px;
+  }
+
+  @media (max-width: 768px) {
+    padding: 0.5rem 0.75rem;
+    min-width: auto;
+    border-radius: 15px;
+  }
+`;
+
+const DateText = styled.p`
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: #bcaaa4;
+  margin: 0;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+
+  @media (max-width: 768px) {
+    font-size: 0.65rem;
+    letter-spacing: 0px;
+  }
+`;
+
+const TimeText = styled.h2`
+  font-size: 1.75rem;
+  font-weight: 900;
+  color: #4a3728;
+  margin: 0;
+  font-family: 'Courier New', monospace;
+  letter-spacing: -1px;
+  line-height: 1;
+
+  @media (max-width: 1024px) {
+    font-size: 1.4rem;
+  }
+
+  @media (max-width: 768px) {
+    font-size: 1.1rem;
+  }
+`;
+
 const formatBookingDate = (dateString) => {
   if (!dateString) return '';
   const parts = dateString.split('-');
@@ -473,6 +536,7 @@ const Admin = () => {
   const [toastNotifications, setToastNotifications] = useState([]);
   const [showNotificationsModal, setShowNotificationsModal] = useState(false);
   const [unreadCount, setUnreadCount] = useState(0);
+  const [currentDate, setCurrentDate] = useState(new Date());
 
   // New state for Edit Mode
   const [settingsSasa, setSettingsSasa] = useState({ blockedDates: [], dateCaps: {}, maxReservationsPerDay: 10, maxReservationsPerSlot: 1 });
@@ -504,6 +568,15 @@ const Admin = () => {
     });
     return counts;
   }, [bookings]);
+
+  // Realtime date update
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setCurrentDate(new Date());
+    }, 1000);
+
+    return () => clearInterval(timer);
+  }, []);
 
   useEffect(() => {
     if (confirmAction?.bookingData) {
@@ -832,9 +905,9 @@ const Admin = () => {
       <AdminSidebar activeIndex={0} />
       <MainContent>
         <Header>
-          <div>
+          <div style={{ minWidth: 0 }}>
             <DashboardTitle>Dashboard</DashboardTitle>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', marginTop: '0.5rem' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', marginTop: '0.5rem', flexWrap: 'wrap', justifyContent: 'center' }}>
               <ClinicName>Dr. A Dental Clinic</ClinicName>
               <span style={{ color: '#e0e0e0' }}>|</span>
               <span style={{ fontSize: '0.8rem', color: '#bcaaa4', fontWeight: 600 }}>
@@ -857,27 +930,38 @@ const Admin = () => {
             </div>
           </div>
           
-          <div style={{ position: 'relative' }}>
-            <button 
-              onClick={() => { setShowNotificationsModal(true); setUnreadCount(0); }} 
-              style={{ background: 'white', border: 'none', padding: '1rem', borderRadius: '50%', boxShadow: '0 5px 15px rgba(0,0,0,0.05)', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', transition: 'transform 0.2s' }}
-              onMouseEnter={(e) => e.currentTarget.style.transform = 'scale(1.05)'}
-              onMouseLeave={(e) => e.currentTarget.style.transform = 'scale(1)'}
-            >
-              <Bell size={24} color="#4a3728" />
-              <AnimatePresence>
-                {unreadCount > 0 && (
-                  <motion.div 
-                    initial={{ scale: 0 }}
-                    animate={{ scale: 1 }}
-                    exit={{ scale: 0 }}
-                    style={{ position: 'absolute', top: '-5px', right: '-5px', background: '#f44336', color: 'white', fontSize: '0.75rem', fontWeight: 900, width: '24px', height: '24px', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', border: '3px solid #f5f5f5' }}
-                  >
-                    {unreadCount > 9 ? '9+' : unreadCount}
-                  </motion.div>
-                )}
-              </AnimatePresence>
-            </button>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', flexWrap: 'wrap', justifyContent: 'center' }}>
+            <ClockContainer>
+              <DateText>
+                {currentDate.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' })}
+              </DateText>
+              <TimeText>
+                {currentDate.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: true })}
+              </TimeText>
+            </ClockContainer>
+
+            <div style={{ position: 'relative' }}>
+              <button 
+                onClick={() => { setShowNotificationsModal(true); setUnreadCount(0); }} 
+                style={{ background: 'white', border: 'none', padding: '1rem', borderRadius: '50%', boxShadow: '0 5px 15px rgba(0,0,0,0.05)', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', transition: 'transform 0.2s' }}
+                onMouseEnter={(e) => e.currentTarget.style.transform = 'scale(1.05)'}
+                onMouseLeave={(e) => e.currentTarget.style.transform = 'scale(1)'}
+              >
+                <Bell size={24} color="#4a3728" />
+                <AnimatePresence>
+                  {unreadCount > 0 && (
+                    <motion.div 
+                      initial={{ scale: 0 }}
+                      animate={{ scale: 1 }}
+                      exit={{ scale: 0 }}
+                      style={{ position: 'absolute', top: '-5px', right: '-5px', background: '#f44336', color: 'white', fontSize: '0.75rem', fontWeight: 900, width: '24px', height: '24px', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', border: '3px solid #f5f5f5' }}
+                    >
+                      {unreadCount > 9 ? '9+' : unreadCount}
+                    </motion.div>
+                  )}
+                </AnimatePresence>
+              </button>
+            </div>
           </div>
         </Header>
 
