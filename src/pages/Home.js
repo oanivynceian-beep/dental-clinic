@@ -3,6 +3,7 @@ import styled from 'styled-components';
 import { motion } from "framer-motion";
 import Header from '../components/Header';
 import Footer from '../components/Footer';
+import HighlightsCarousel from '../components/HighlightsCarousel';
 import { useNavigate } from 'react-router-dom';
 import { db } from './firebase';
 import { collection, addDoc } from 'firebase/firestore';
@@ -327,6 +328,8 @@ const Home = () => {
           <CTAButton onClick={() => navigate('/book-now')}>Book Now!</CTAButton>
         </ContentWrapper>
       </HeroSection>
+
+      <HighlightsCarousel />
 
       <ServicesBanner
         initial={{ opacity: 0, scale: 0.95 }}

@@ -17,6 +17,8 @@ import AdminStats from "./pages/AdminStats";
 import AdminCalendarSettings from "./pages/AdminCalendarSettings";
 import AdminServices from "./pages/AdminServices";
 import AdminDentists from "./pages/AdminDentists";
+import AdminArticles from "./pages/AdminArticles";
+import Article from "./pages/Article";
 
 function App() {
   return (
@@ -29,6 +31,7 @@ function App() {
         <Route path="/recent-activities" element={<RecentActivities />} />
         <Route path="/contact" element={<Contact />} />
         <Route path="/book-now" element={<BookNow />} />
+        <Route path="/article/:id" element={<Article />} />
         <Route path="/my-bookings" element={<MyBookings />} />
         <Route path="/admin" element={<Admin />} />
         <Route path="/admin/calendar" element={<AdminCalendar />} />
@@ -40,6 +43,7 @@ function App() {
         />
         <Route path="/admin/services" element={<AdminServices />} />
         <Route path="/admin/dentists" element={<AdminDentists />} />
+        <Route path="/admin/articles" element={<AdminArticles />} />
       </Routes>
       <Analytics />
     </Router>
