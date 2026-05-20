@@ -1,12 +1,21 @@
 import React, { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import styled from 'styled-components';
+import styled, { keyframes } from 'styled-components';
 import { motion } from 'framer-motion';
-import { ArrowLeft, Loader2 } from 'lucide-react';
+import { ArrowLeft } from 'lucide-react';
 import Header from '../components/Header';
 import Footer from '../components/Footer';
 import { db } from './firebase';
 import { doc, getDoc } from 'firebase/firestore';
+
+const shimmer = keyframes`
+  0% {
+    background-position: -1000px 0;
+  }
+  100% {
+    background-position: 1000px 0;
+  }
+`;
 
 const PageContainer = styled.div`
   min-height: 100vh;
@@ -76,6 +85,43 @@ const NotFoundText = styled.h2`
   margin-top: 5rem;
 `;
 
+const SkeletonImageContainer = styled.div`
+  width: 100%;
+  height: 400px;
+  border-radius: 24px;
+  margin-bottom: 3rem;
+  background: linear-gradient(90deg, #f0e0d8 25%, #e8d4c8 50%, #f0e0d8 75%);
+  background-size: 1000px 100%;
+  animation: ${shimmer} 2s infinite;
+`;
+
+const SkeletonTextContainer = styled.div`
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+`;
+
+const SkeletonTitle = styled.div`
+  height: 2.5rem;
+  background: linear-gradient(90deg, #f0e0d8 25%, #e8d4c8 50%, #f0e0d8 75%);
+  background-size: 1000px 100%;
+  animation: ${shimmer} 2s infinite;
+  border-radius: 8px;
+  margin-bottom: 1.5rem;
+`;
+
+const SkeletonLine = styled.div`
+  height: 1rem;
+  background: linear-gradient(90deg, #f0e0d8 25%, #e8d4c8 50%, #f0e0d8 75%);
+  background-size: 1000px 100%;
+  animation: ${shimmer} 2s infinite;
+  border-radius: 4px;
+  
+  &:last-child {
+    width: 85%;
+  }
+`;
+
 const Article = () => {
   const { id } = useParams();
   const navigate = useNavigate();
@@ -110,9 +156,18 @@ const Article = () => {
     return (
       <PageContainer>
         <Header />
-        <ContentWrapper style={{ display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
-          <Loader2 size={40} color="#4a3728" style={{ animation: 'spin 1s linear infinite' }} />
-          <style>{`@keyframes spin { 100% { transform: rotate(360deg); } }`}</style>
+        <ContentWrapper>
+          <BackButton style={{ visibility: 'hidden' }}>
+            <ArrowLeft size={20} /> Back to Home
+          </BackButton>
+          <SkeletonImageContainer />
+          <SkeletonTitle />
+          <SkeletonTextContainer>
+            <SkeletonLine />
+            <SkeletonLine />
+            <SkeletonLine />
+            <SkeletonLine />
+          </SkeletonTextContainer>
         </ContentWrapper>
         <Footer />
       </PageContainer>

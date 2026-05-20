@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import styled, { keyframes } from 'styled-components';
 import { motion } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
-import { ArrowRight, Loader2 } from 'lucide-react';
+import { ArrowRight } from 'lucide-react';
 import { db } from '../pages/firebase';
 import { collection, query, orderBy, onSnapshot } from 'firebase/firestore';
 
@@ -126,6 +126,63 @@ const ReadMore = styled.div`
   }
 `;
 
+const shimmer = keyframes`
+  0% {
+    background-position: -1000px 0;
+  }
+  100% {
+    background-position: 1000px 0;
+  }
+`;
+
+const SkeletonCard = styled.div`
+  width: 350px;
+  height: 420px;
+  background: white;
+  border-radius: 24px;
+  overflow: hidden;
+  box-shadow: 0 10px 30px rgba(74, 55, 40, 0.08);
+  display: flex;
+  flex-direction: column;
+  border: 1px solid rgba(74, 55, 40, 0.05);
+  flex-shrink: 0;
+`;
+
+const SkeletonImagePlaceholder = styled.div`
+  width: 100%;
+  height: 200px;
+  background: linear-gradient(90deg, #f0e0d8 25%, #e8d4c8 50%, #f0e0d8 75%);
+  background-size: 1000px 100%;
+  animation: ${shimmer} 2s infinite;
+`;
+
+const SkeletonContentPlaceholder = styled.div`
+  padding: 1.5rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+`;
+
+const SkeletonTitle = styled.div`
+  height: 1.25rem;
+  background: linear-gradient(90deg, #f0e0d8 25%, #e8d4c8 50%, #f0e0d8 75%);
+  background-size: 1000px 100%;
+  animation: ${shimmer} 2s infinite;
+  border-radius: 4px;
+`;
+
+const SkeletonText = styled.div`
+  height: 0.95rem;
+  background: linear-gradient(90deg, #f0e0d8 25%, #e8d4c8 50%, #f0e0d8 75%);
+  background-size: 1000px 100%;
+  animation: ${shimmer} 2s infinite;
+  border-radius: 4px;
+  
+  &:last-child {
+    width: 80%;
+  }
+`;
+
 const HighlightsCarousel = () => {
   const navigate = useNavigate();
   const [articles, setArticles] = useState([]);
@@ -143,9 +200,28 @@ const HighlightsCarousel = () => {
 
   if (isLoading) {
     return (
-      <div style={{ width: '100%', display: 'flex', justifyContent: 'center', padding: '4rem 0' }}>
-        <Loader2 size={32} color="#4a3728" style={{ animation: 'spin 1s linear infinite' }} />
-        <style>{`@keyframes spin { 100% { transform: rotate(360deg); } }`}</style>
+      <div style={{ width: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+        <h2 style={{ color: '#4a3728', fontWeight: 900, fontSize: '2.2rem', marginBottom: '1rem' }}>
+          What's New
+        </h2>
+        <p style={{ color: '#6d4c41', marginBottom: '1rem', textAlign: 'center', maxWidth: '600px' }}>
+          Discover our latest updates, advanced treatments, and clinic highlights.
+        </p>
+        <div style={{ width: '100%', padding: '2rem 0', overflow: 'hidden' }}>
+          <div style={{ display: 'flex', gap: '2rem', padding: '2rem 5%' }}>
+            {[1, 2, 3].map((index) => (
+              <SkeletonCard key={index}>
+                <SkeletonImagePlaceholder />
+                <SkeletonContentPlaceholder>
+                  <SkeletonTitle />
+                  <SkeletonText />
+                  <SkeletonText />
+                  <SkeletonText />
+                </SkeletonContentPlaceholder>
+              </SkeletonCard>
+            ))}
+          </div>
+        </div>
       </div>
     );
   }
