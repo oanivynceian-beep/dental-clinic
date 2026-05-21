@@ -645,6 +645,13 @@ const DayCell = styled.button`
     transform: ${props => props.$disabled ? 'none' : 'scale(1.1)'};
   }
 
+  @media (max-width: 480px) {
+    aspect-ratio: auto;
+    min-height: 44px;
+    padding-bottom: 12px;
+    font-size: 0.85rem;
+  }
+
   ${props => props.$today && !props.$selected && `
     &::after {
       content: '';
@@ -678,7 +685,9 @@ const SlotBadge = styled.span`
   };
 
   @media (max-width: 480px) {
-    display: none;
+    font-size: 0.45rem;
+    bottom: 2px;
+    letter-spacing: -0.3px;
   }
 `;
 
