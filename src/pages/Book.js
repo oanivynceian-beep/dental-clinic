@@ -657,7 +657,7 @@ const DayCell = styled.button`
     padding: 4px 2px;
     font-size: 0.85rem;
   }
-
+  
   ${props => props.$today && !props.$selected && `
     &::after {
       content: '';
@@ -982,6 +982,7 @@ const CustomDropdown = ({ value, onChange, placeholder, options, icon: IconCompo
 const BookNow = () => {
   const navigate = useNavigate();
   const [isSubmitted, setIsSubmitted] = useState(false);
+  const [showConfirmation, setShowConfirmation] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [agreedToTerms, setAgreedToTerms] = useState(false);
   const [showTermsModal, setShowTermsModal] = useState(false);
@@ -1079,7 +1080,7 @@ const BookNow = () => {
 
     const other = { value: 'Other', label: 'Other (Please specify)' };
 
-    const formatSub = (s) => s.price != null ? `₱${Number(s.price).toLocaleString('en-PH', { minimumFractionDigits: 0 })}` : undefined;
+    const formatSub = (s) => s.price != null ? `₱${Number(s.price).toLocaleString('en-PH', { minimumFractionDigits: 0 })} min` : undefined;
 
     const filterAndFormat = (list) =>
       [...list.filter(s => !disabledIds.includes(s.id)).map(s => ({ ...s, sub: formatSub(s) })), other];
@@ -1102,7 +1103,7 @@ const BookNow = () => {
     if (formData.reason && formData.reason !== 'Other') {
       filtered = filtered.filter(d => d.services && d.services.includes(formData.reason));
     }
-    
+
     return [
       { value: '', label: 'Any Available Dentist', color: 'rgba(0,0,0,0.03)', iconColor: '#bcaaa4' },
       ...filtered.map(d => ({
@@ -1124,8 +1125,12 @@ const BookNow = () => {
     setFormData(prev => ({ ...prev, date: dateStr, time: '' }));
   };
 
-  const handleSubmit = async (e) => {
+  const handleSubmit = (e) => {
     e.preventDefault();
+    setShowConfirmation(true);
+  };
+
+  const handleConfirmBooking = async () => {
     setIsLoading(true);
     try {
       const submissionData = { ...formData };
@@ -1140,6 +1145,7 @@ const BookNow = () => {
         status: 'pending',
         createdAt: serverTimestamp()
       });
+      setShowConfirmation(false);
       setIsSubmitted(true);
     } catch (error) {
       console.error("Error adding document: ", error);
@@ -1158,12 +1164,21 @@ const BookNow = () => {
   const handleSaveAsPng = async () => {
     if (!modalRef.current) return;
     try {
+      // Hide buttons before taking screenshot
+      const buttonsContainer = modalRef.current.querySelector('[data-hide-for-png]');
+      const originalDisplay = buttonsContainer?.style.display;
+      if (buttonsContainer) buttonsContainer.style.display = 'none';
+
       const canvas = await html2canvas(modalRef.current, {
         backgroundColor: '#ffffff',
         scale: 2,
         useCORS: true,
         logging: false,
       });
+      
+      // Restore buttons
+      if (buttonsContainer) buttonsContainer.style.display = originalDisplay;
+
       const link = document.createElement('a');
       link.download = `appointment-${formData.fullName.replace(/\s+/g, '-')}-${formData.date}.png`;
       link.href = canvas.toDataURL('image/png');
@@ -1557,6 +1572,115 @@ const BookNow = () => {
         </BookingFormContainer>
       </ContentSection>
       <AnimatePresence>
+        {showConfirmation && (
+          <ModalBackdrop
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.3 }}
+            onClick={() => setShowConfirmation(false)}
+          >
+            <ModalCard
+              initial={{ opacity: 0, scale: 0.85, y: 30 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.85, y: 30 }}
+              transition={{ type: 'spring', damping: 25, stiffness: 300 }}
+              onClick={(e) => e.stopPropagation()}
+            >
+              <ModalCloseButton onClick={() => setShowConfirmation(false)}>
+                <X size={16} />
+              </ModalCloseButton>
+
+              <ModalTitle>Confirm Your Booking</ModalTitle>
+              <ModalSubtext>
+                Please review your appointment details before confirming.
+              </ModalSubtext>
+
+              <ModalSummary>
+                <SummaryRow>
+                  <span>Name</span>
+                  <span>{formData.fullName}</span>
+                </SummaryRow>
+                <SummaryRow>
+                  <span>Email</span>
+                  <span>{formData.email}</span>
+                </SummaryRow>
+                <SummaryRow>
+                  <span>Phone</span>
+                  <span>{formData.phone}</span>
+                </SummaryRow>
+                <SummaryRow>
+                  <span>Branch</span>
+                  <span>{getBranchLabel(formData.branch)}</span>
+                </SummaryRow>
+                <SummaryRow>
+                  <span>Date</span>
+                  <span>{formatDate(formData.date)}</span>
+                </SummaryRow>
+                <SummaryRow>
+                  <span>Time</span>
+                  <span>{formData.time}</span>
+                </SummaryRow>
+                {formData.reason && (
+                  <>
+                    <SummaryRow>
+                      <span>Reason</span>
+                      <span>{formData.reason === 'Other' ? formData.customReason : formData.reason}</span>
+                    </SummaryRow>
+                    {formData.reason !== 'Other' && (() => {
+                      const selectedService = [...globalServices.major, ...globalServices.minor].find(s => s.value === formData.reason);
+                      if (selectedService && selectedService.price != null) {
+                        return (
+                          <SummaryRow>
+                            <span>Price</span>
+                            <span style={{ color: '#2e7d32' }}>₱{Number(selectedService.price).toLocaleString('en-PH', { minimumFractionDigits: 0 })} min</span>
+                          </SummaryRow>
+                        );
+                      }
+                      return null;
+                    })()}
+                  </>
+                )}
+                {formData.dentist && (
+                  <SummaryRow>
+                    <span>Dentist</span>
+                    <span>{formData.dentist}</span>
+                  </SummaryRow>
+                )}
+              </ModalSummary>
+
+              <ModalActions>
+                <ModalButton
+                  $variant="outline"
+                  onClick={() => setShowConfirmation(false)}
+                  whileHover={{ scale: 1.02 }}
+                  whileTap={{ scale: 0.98 }}
+                >
+                  Cancel
+                </ModalButton>
+                <ModalButton
+                  onClick={handleConfirmBooking}
+                  disabled={isLoading}
+                  whileHover={{ scale: 1.02 }}
+                  whileTap={{ scale: 0.98 }}
+                  style={{ opacity: isLoading ? 0.6 : 1 }}
+                >
+                  {isLoading ? (
+                    <>
+                      <Spinner size={18} /> Processing...
+                    </>
+                  ) : (
+                    <>
+                      <CheckCircle2 size={18} /> Confirm Booking
+                    </>
+                  )}
+                </ModalButton>
+              </ModalActions>
+            </ModalCard>
+          </ModalBackdrop>
+        )}
+      </AnimatePresence>
+      <AnimatePresence>
         {isSubmitted && (
           <ModalBackdrop
             initial={{ opacity: 0 }}
@@ -1663,7 +1787,7 @@ const BookNow = () => {
                 </p>
               </div>
 
-              <ModalActions>
+              <ModalActions data-hide-for-png>
                 <ModalButton
                   $variant="outline"
                   onClick={handleBookAnother}

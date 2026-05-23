@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import styled from 'styled-components';
 import { motion, AnimatePresence } from "framer-motion";
 import Header from '../components/Header';
@@ -7,7 +7,6 @@ import HighlightsCarousel from '../components/HighlightsCarousel';
 import { useNavigate } from 'react-router-dom';
 import { db } from './firebase';
 import { collection, addDoc } from 'firebase/firestore';
-import hcdclogo from './hcdc-logo.png';
 
 const servicesData = [
   {
@@ -80,7 +79,7 @@ const servicesData = [
     ]
   },
   {
-    category: "Major Major",
+    category: "Major Special Services",
     image: "https://images.unsplash.com/photo-1598256989800-fe5f95da9787?auto=format&fit=crop&q=80&w=1000",
     items: [
       { name: "Implants w/ Zirconia Crown" },
@@ -99,201 +98,109 @@ const HeroSection = styled.section`
   height: 100vh;
   min-height: 600px;
   display: flex;
-  overflow: hidden;
-
-  @media (max-width: 900px) {
-    flex-direction: column;
-    height: auto;
-    min-height: auto;
-  }
-`;
-
-const HeroLeftPane = styled.div`
-  flex: 0 0 40%;
-  position: relative;
+  justify-content: center;
+  align-items: center;
   background-image: url('/hero-image.png');
   background-size: cover;
   background-position: center;
-  display: flex;
-  justify-content: center;
-  align-items: center;
+  overflow: hidden;
 
-  &::after {
+  &::before {
     content: '';
     position: absolute;
     inset: 0;
     background: rgba(255, 255, 255, 0.85);
     z-index: 1;
   }
-
-  @media (max-width: 900px) {
-    min-height: 40vh;
-    width: 100%;
-    flex: none;
-    padding: 20px;
-  }
 `;
 
-const HeroRightPane = styled.div`
-  flex: 0 0 60%;
-  background-color: #f4eee6;
+const TopWave = styled.div`
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 250px;
+  z-index: 2;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 1440 250' preserveAspectRatio='none'%3E%3Cpath fill='%236a4b3d' fill-opacity='0.1' d='M600,0 C900,150 1100,50 1440,150 L1440,0 Z' /%3E%3Cpath fill='%236a4b3d' fill-opacity='0.15' d='M800,0 C1000,80 1200,30 1440,80 L1440,0 Z' /%3E%3C/svg%3E");
+  background-size: 100% 100%;
+  pointer-events: none;
+`;
+
+const BottomWave = styled.div`
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  width: 100%;
+  height: 250px;
+  z-index: 2;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 1440 250' preserveAspectRatio='none'%3E%3Cpath fill='%236a4b3d' fill-opacity='0.1' d='M0,100 C300,250 500,100 800,250 L0,250 Z' /%3E%3Cpath fill='%236a4b3d' fill-opacity='0.15' d='M0,170 C200,220 400,170 600,250 L0,250 Z' /%3E%3C/svg%3E");
+  background-size: 100% 100%;
+  pointer-events: none;
+`;
+
+const HeroContent = styled.div`
+  position: relative;
+  z-index: 3;
   display: flex;
   flex-direction: column;
-  justify-content: center;
-  padding: 0 8%;
-  position: relative;
-  z-index: 2;
-
-  @media (max-width: 900px) {
-    flex: none;
-    padding: 30px 6% 40px;
-    align-items: center;
-    text-align: center;
-    min-height: auto;
-  }
-`;
-
-const TopLeftText = styled.div`
-  position: absolute;
-  top: 40px;
-  left: 5%;
-  font-weight: 800;
-  color: #a08c82;
-  font-size: 1rem;
-  z-index: 3;
-  letter-spacing: 1px;
-  text-transform: uppercase;
-
-  @media (max-width: 900px) {
-    top: 16px;
-    left: 16px;
-    font-size: 0.8rem;
-  }
-`;
-
-const BigHeroLogo = styled(motion.img)`
-  width: 80%;
-  max-width: 450px;
-  z-index: 3;
-
-  @media (max-width: 900px) {
-    width: 60%;
-    max-width: 300px;
-  }
-`;
-
-const TopRightContainer = styled.div`
-  position: absolute;
-  top: 40px;
-  right: 8%;
-  display: flex;
   align-items: center;
-  gap: 20px;
-  z-index: 3;
-
-  @media (max-width: 900px) {
-    position: relative;
-    top: auto;
-    right: auto;
-    flex-direction: column;
-    justify-content: center;
-    align-items: center;
-    gap: 12px;
-    width: 100%;
-    margin-bottom: 24px;
-  }
+  text-align: center;
+  padding: 0 20px;
 `;
 
-const TopRightText = styled.span`
-  font-weight: 800;
-  color: #6a4b3d;
-  font-size: 1.1rem;
+const BackgroundLogo = styled.img`
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 600px;
+  opacity: 0.1;
+  z-index: 2;
+  pointer-events: none;
 
-  @media (max-width: 900px) {
-    font-size: 0.85rem;
-  }
-
-  @media (max-width: 400px) {
-    font-size: 0.75rem;
-  }
-`;
-
-const TopRightButton = styled.button`
-  background-color: #6a4b3d;
-  color: white;
-  border: none;
-  padding: 12px 28px;
-  border-radius: 8px;
-  font-weight: 700;
-  font-size: 1rem;
-  cursor: pointer;
-  transition: all 0.3s ease;
-  
-  &:hover {
-    background-color: #4e342e;
-    transform: translateY(-2px);
-  }
-
-  @media (max-width: 900px) {
-    padding: 10px 24px;
-    font-size: 0.9rem;
+  @media (max-width: 768px) {
+    width: 350px;
   }
 `;
 
 const MainHeadline = styled(motion.h1)`
   font-size: clamp(2.5rem, 5vw, 4.5rem);
   font-weight: 900;
-  color: #6a4b3d;
+  color: #4a3728;
   line-height: 1.15;
-  margin-top: -50px;
   letter-spacing: -0.5px;
+  margin-bottom: 40px;
+  text-shadow: 0 0 20px rgba(255, 255, 255, 0.9);
 
   @media (max-width: 900px) {
-    margin-top: 0;
-    font-size: 1.8rem;
-    line-height: 1.2;
+    font-size: 2.5rem;
   }
-
   @media (max-width: 400px) {
-    font-size: 1.5rem;
+    font-size: 2rem;
   }
 `;
 
-const PartnerContainer = styled.div`
-  position: absolute;
-  bottom: 50px;
-  right: 15%;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 15px;
-  z-index: 3;
-
-  @media (max-width: 900px) {
-    position: relative;
-    bottom: auto;
-    right: auto;
-    margin-top: 30px;
-    gap: 10px;
+const HeroButton = styled(motion.button)`
+  background-color: #6a4b3d;
+  color: white;
+  border: none;
+  padding: 16px 48px;
+  border-radius: 12px;
+  font-weight: 800;
+  font-size: 1.3rem;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  box-shadow: 0 4px 15px rgba(106, 75, 61, 0.3);
+  
+  &:hover {
+    background-color: #4e342e;
+    transform: translateY(-3px);
+    box-shadow: 0 6px 20px rgba(106, 75, 61, 0.4);
   }
-`;
-
-const PartnerText = styled.span`
-  color: #6a4b3d;
-  font-weight: 600;
-  font-size: 1rem;
 
   @media (max-width: 900px) {
-    font-size: 0.85rem;
-  }
-`;
-
-const PartnerLogo = styled.img`
-  height: 60px;
-  object-fit: contain;
-
-  @media (max-width: 900px) {
-    height: 45px;
+    padding: 14px 36px;
+    font-size: 1.1rem;
   }
 `;
 
@@ -540,24 +447,6 @@ const Home = () => {
   const [submitting, setSubmitting] = useState(false);
   const [message, setMessage] = useState('');
   const [expandedService, setExpandedService] = useState(null);
-  const [showHeader, setShowHeader] = useState(false);
-
-  useEffect(() => {
-    const handleScroll = () => {
-      // Show the header when scrolled past the hero section (e.g., 90% of viewport height)
-      if (window.scrollY > window.innerHeight * 0.9) {
-        setShowHeader(true);
-      } else {
-        setShowHeader(false);
-      }
-    };
-
-    // Initial check
-    handleScroll();
-
-    window.addEventListener('scroll', handleScroll, { passive: true });
-    return () => window.removeEventListener('scroll', handleScroll);
-  }, []);
 
   const toggleService = (index) => {
     if (expandedService === index) {
@@ -604,41 +493,31 @@ const Home = () => {
   };
   return (
     <>
-      <Header hidden={!showHeader} />
+      <Header />
       <HeroSection>
-        <HeroLeftPane>
-          <TopLeftText>DR. A DENTAL CLINIC</TopLeftText>
-          <BigHeroLogo
-            src="/logo.png"
-            alt="Dr. A Logo"
-            initial={{ opacity: 0, scale: 0.9 }}
-            animate={{ opacity: 1, scale: 1 }}
-            transition={{ duration: 0.8, ease: 'easeOut' }}
-          />
-        </HeroLeftPane>
+        <TopWave />
+        <BottomWave />
+        <BackgroundLogo src="/logo.png" alt="Tooth Logo Background" />
 
-        <HeroRightPane>
-          <TopRightContainer>
-            <TopRightText>“Your Smile, Our Passion”</TopRightText>
-            <TopRightButton onClick={() => navigate('/book-now')}>Inquire Now</TopRightButton>
-          </TopRightContainer>
-
+        <HeroContent>
           <MainHeadline
             initial={{ opacity: 0, y: 30 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.8, delay: 0.3 }}
           >
-            Committed to<br />
-            Creating Smiles,<br />
-            Grounded in<br />
-            Compassionate Care
+            Dedicated to Smiles,<br />
+            Anchored in Care
           </MainHeadline>
 
-          <PartnerContainer>
-            <PartnerText>Official Partner/s:</PartnerText>
-            <PartnerLogo src={hcdclogo} alt="Holy Cross of Davao College" />
-          </PartnerContainer>
-        </HeroRightPane>
+          <HeroButton
+            onClick={() => navigate('/book-now')}
+            initial={{ opacity: 0, y: 30 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.8, delay: 0.5 }}
+          >
+            Book Here!
+          </HeroButton>
+        </HeroContent>
       </HeroSection>
 
       <HighlightsCarousel />
