@@ -33,6 +33,9 @@ const NavContainer = styled.header`
   box-shadow: 0 6px 20px rgba(0,0,0,0.08);
 
   transition: all 0.3s ease;
+  transform: translateY(${props => props.$hidden ? '-150%' : '0'});
+  opacity: ${props => props.$hidden ? '0' : '1'};
+  pointer-events: ${props => props.$hidden ? 'none' : 'auto'};
 
   @media (max-width: 768px) {
     left: 8px;
@@ -220,13 +223,13 @@ const MobileButton = styled.div`
   }
 `;
 
-const Header = () => {
+const Header = ({ hidden = false }) => {
   const [isOpen, setIsOpen] = useState(false);
   const location = useLocation();
   const closeMenu = () => setIsOpen(false);
 
   return (
-    <NavContainer>
+    <NavContainer $hidden={hidden}>
       <Logo>
         <img src={logo} alt="Dr. A Dental Clinic" />
       </Logo>

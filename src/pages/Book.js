@@ -639,6 +639,12 @@ const DayCell = styled.button`
   pointer-events: ${props => (props.$empty || props.$disabled) ? 'none' : 'auto'};
   transition: all 0.2s ease;
   position: relative;
+  
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 4px 2px;
 
   &:hover {
     background: ${props => props.$selected ? '#3e2b1f' : 'rgba(74, 55, 40, 0.12)'};
@@ -648,7 +654,7 @@ const DayCell = styled.button`
   @media (max-width: 480px) {
     aspect-ratio: auto;
     min-height: 44px;
-    padding-bottom: 12px;
+    padding: 4px 2px;
     font-size: 0.85rem;
   }
 
@@ -668,25 +674,22 @@ const DayCell = styled.button`
 `;
 
 const SlotBadge = styled.span`
-  position: absolute;
-  bottom: 3px;
-  left: 50%;
-  transform: translateX(-50%);
-  font-size: 0.5rem;
+  margin-top: 3px;
+  font-size: 0.62rem;
   font-weight: 800;
   line-height: 1;
   white-space: nowrap;
   letter-spacing: -0.2px;
   pointer-events: none;
-  color: ${p => p.$selected ? 'rgba(255,255,255,0.8)' :
+  color: ${p => p.$selected ? 'rgba(255,255,255,0.9)' :
     p.$full ? '#e53935' :
       p.$low ? '#f57c00' :
         '#388e3c'
   };
 
   @media (max-width: 480px) {
-    font-size: 0.45rem;
-    bottom: 2px;
+    font-size: 0.55rem;
+    margin-top: 2px;
     letter-spacing: -0.3px;
   }
 `;

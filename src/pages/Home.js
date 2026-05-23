@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import styled from 'styled-components';
 import { motion, AnimatePresence } from "framer-motion";
 import Header from '../components/Header';
@@ -7,6 +7,7 @@ import HighlightsCarousel from '../components/HighlightsCarousel';
 import { useNavigate } from 'react-router-dom';
 import { db } from './firebase';
 import { collection, addDoc } from 'firebase/firestore';
+import hcdclogo from './hcdc-logo.png';
 
 const servicesData = [
   {
@@ -103,47 +104,77 @@ const HeroSection = styled.section`
   @media (max-width: 900px) {
     flex-direction: column;
     height: auto;
-    min-height: 100vh;
+    min-height: auto;
   }
 `;
 
 const HeroLeftPane = styled.div`
-  flex: 1;
+  flex: 0 0 40%;
   position: relative;
   background-image: url('/hero-image.png');
   background-size: cover;
   background-position: center;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+
+  &::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: rgba(255, 255, 255, 0.85);
+    z-index: 1;
+  }
 
   @media (max-width: 900px) {
-    min-height: 45vh;
+    min-height: 40vh;
     width: 100%;
-    padding-top: 80px;
+    flex: none;
+    padding: 20px;
   }
 `;
 
 const HeroRightPane = styled.div`
-  flex: 1;
-  background-color: #f8f5f2;
+  flex: 0 0 60%;
+  background-color: #f4eee6;
   display: flex;
   flex-direction: column;
   justify-content: center;
-  padding: 120px 10% 60px 10%;
+  padding: 0 8%;
   position: relative;
   z-index: 2;
 
   @media (max-width: 900px) {
     flex: none;
-    padding: 60px 8%;
+    padding: 30px 6% 40px;
     align-items: center;
     text-align: center;
-    min-height: 45vh;
+    min-height: auto;
   }
 `;
 
-const HeroLogo = styled(motion.img)`
-  width: 70%;
-  max-width: 400px;
-  margin-bottom: 2rem;
+const TopLeftText = styled.div`
+  position: absolute;
+  top: 40px;
+  left: 5%;
+  font-weight: 800;
+  color: #a08c82;
+  font-size: 1rem;
+  z-index: 3;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+
+  @media (max-width: 900px) {
+    top: 16px;
+    left: 16px;
+    font-size: 0.8rem;
+  }
+`;
+
+const BigHeroLogo = styled(motion.img)`
+  width: 80%;
+  max-width: 450px;
+  z-index: 3;
 
   @media (max-width: 900px) {
     width: 60%;
@@ -151,41 +182,118 @@ const HeroLogo = styled(motion.img)`
   }
 `;
 
-const Headline = styled(motion.h1)`
-  font-size: clamp(2.5rem, 5vw, 4.5rem);
-  font-weight: 900;
-  color: #6a4b3d;
-  line-height: 1.1;
-  margin-bottom: 20px;
-  letter-spacing: -1px;
+const TopRightContainer = styled.div`
+  position: absolute;
+  top: 40px;
+  right: 8%;
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  z-index: 3;
 
   @media (max-width: 900px) {
-    font-size: 2.2rem;
+    position: relative;
+    top: auto;
+    right: auto;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    gap: 12px;
+    width: 100%;
+    margin-bottom: 24px;
   }
 `;
 
-const CTAButton = styled.button`
+const TopRightText = styled.span`
+  font-weight: 800;
+  color: #6a4b3d;
+  font-size: 1.1rem;
+
+  @media (max-width: 900px) {
+    font-size: 0.85rem;
+  }
+
+  @media (max-width: 400px) {
+    font-size: 0.75rem;
+  }
+`;
+
+const TopRightButton = styled.button`
   background-color: #6a4b3d;
   color: white;
   border: none;
-  padding: 14px 36px;
+  padding: 12px 28px;
   border-radius: 8px;
-  font-size: 1.1rem;
-  font-weight: 600;
+  font-weight: 700;
+  font-size: 1rem;
   cursor: pointer;
-  transition: background 0.3s ease, transform 0.3s ease;
-  animation: pulse 2s infinite;
-
-  @keyframes pulse {
-    0% { transform: scale(1); }
-    50% { transform: scale(1.05); }
-    100% { transform: scale(1); }
-  }
-
+  transition: all 0.3s ease;
+  
   &:hover {
     background-color: #4e342e;
-    animation: none;
-    transform: scale(1.1);
+    transform: translateY(-2px);
+  }
+
+  @media (max-width: 900px) {
+    padding: 10px 24px;
+    font-size: 0.9rem;
+  }
+`;
+
+const MainHeadline = styled(motion.h1)`
+  font-size: clamp(2.5rem, 5vw, 4.5rem);
+  font-weight: 900;
+  color: #6a4b3d;
+  line-height: 1.15;
+  margin-top: -50px;
+  letter-spacing: -0.5px;
+
+  @media (max-width: 900px) {
+    margin-top: 0;
+    font-size: 1.8rem;
+    line-height: 1.2;
+  }
+
+  @media (max-width: 400px) {
+    font-size: 1.5rem;
+  }
+`;
+
+const PartnerContainer = styled.div`
+  position: absolute;
+  bottom: 50px;
+  right: 15%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 15px;
+  z-index: 3;
+
+  @media (max-width: 900px) {
+    position: relative;
+    bottom: auto;
+    right: auto;
+    margin-top: 30px;
+    gap: 10px;
+  }
+`;
+
+const PartnerText = styled.span`
+  color: #6a4b3d;
+  font-weight: 600;
+  font-size: 1rem;
+
+  @media (max-width: 900px) {
+    font-size: 0.85rem;
+  }
+`;
+
+const PartnerLogo = styled.img`
+  height: 60px;
+  object-fit: contain;
+
+  @media (max-width: 900px) {
+    height: 45px;
   }
 `;
 
@@ -432,6 +540,24 @@ const Home = () => {
   const [submitting, setSubmitting] = useState(false);
   const [message, setMessage] = useState('');
   const [expandedService, setExpandedService] = useState(null);
+  const [showHeader, setShowHeader] = useState(false);
+
+  useEffect(() => {
+    const handleScroll = () => {
+      // Show the header when scrolled past the hero section (e.g., 90% of viewport height)
+      if (window.scrollY > window.innerHeight * 0.9) {
+        setShowHeader(true);
+      } else {
+        setShowHeader(false);
+      }
+    };
+
+    // Initial check
+    handleScroll();
+
+    window.addEventListener('scroll', handleScroll, { passive: true });
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, []);
 
   const toggleService = (index) => {
     if (expandedService === index) {
@@ -478,33 +604,40 @@ const Home = () => {
   };
   return (
     <>
+      <Header hidden={!showHeader} />
       <HeroSection>
-        <Header />
-        <HeroLeftPane />
-        <HeroRightPane>
-          <HeroLogo
+        <HeroLeftPane>
+          <TopLeftText>DR. A DENTAL CLINIC</TopLeftText>
+          <BigHeroLogo
             src="/logo.png"
             alt="Dr. A Logo"
             initial={{ opacity: 0, scale: 0.9 }}
             animate={{ opacity: 1, scale: 1 }}
             transition={{ duration: 0.8, ease: 'easeOut' }}
           />
-          <Headline
+        </HeroLeftPane>
+
+        <HeroRightPane>
+          <TopRightContainer>
+            <TopRightText>“Your Smile, Our Passion”</TopRightText>
+            <TopRightButton onClick={() => navigate('/book-now')}>Inquire Now</TopRightButton>
+          </TopRightContainer>
+
+          <MainHeadline
             initial={{ opacity: 0, y: 30 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.8, delay: 0.3 }}
           >
-            Dedicated to Smiles,<br />
-            Anchored in Care
-          </Headline>
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.8, delay: 0.5 }}
-            style={{ marginTop: '20px' }}
-          >
-            <CTAButton onClick={() => navigate('/book-now')}>Book Now!</CTAButton>
-          </motion.div>
+            Committed to<br />
+            Creating Smiles,<br />
+            Grounded in<br />
+            Compassionate Care
+          </MainHeadline>
+
+          <PartnerContainer>
+            <PartnerText>Official Partner/s:</PartnerText>
+            <PartnerLogo src={hcdclogo} alt="Holy Cross of Davao College" />
+          </PartnerContainer>
         </HeroRightPane>
       </HeroSection>
 

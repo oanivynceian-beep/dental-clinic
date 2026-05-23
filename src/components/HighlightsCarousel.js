@@ -39,7 +39,12 @@ const CarouselContainer = styled.div`
 
 const scrollAnimation = keyframes`
   0% { transform: translateX(0); }
-  100% { transform: translateX(calc(-350px * 5 - 2rem * 5)); } /* adjust width * num items */
+  100% { transform: translateX(calc(-350px * 5 - 2rem * 5)); }
+`;
+
+const scrollAnimationMobile = keyframes`
+  0% { transform: translateX(0); }
+  100% { transform: translateX(calc(-240px * 5 - 1.5rem * 5)); }
 `;
 
 const CarouselTrack = styled.div`
@@ -50,6 +55,11 @@ const CarouselTrack = styled.div`
 
   &:hover {
     animation-play-state: paused;
+  }
+
+  @media (max-width: 900px) {
+    gap: 1.5rem;
+    animation: ${scrollAnimationMobile} 30s linear infinite;
   }
 `;
 
@@ -66,6 +76,12 @@ const HighlightCard = styled(motion.div)`
   border: 1px solid rgba(74, 55, 40, 0.05);
   position: relative;
   group: card;
+
+  @media (max-width: 900px) {
+    width: 240px;
+    height: 310px;
+    border-radius: 16px;
+  }
 `;
 
 const CardImage = styled.div`
@@ -79,6 +95,10 @@ const CardImage = styled.div`
   ${HighlightCard}:hover & {
     transform: scale(1.05);
   }
+
+  @media (max-width: 900px) {
+    height: 140px;
+  }
 `;
 
 const CardContent = styled.div`
@@ -88,6 +108,10 @@ const CardContent = styled.div`
   flex: 1;
   background: white;
   z-index: 1;
+
+  @media (max-width: 900px) {
+    padding: 1rem;
+  }
 `;
 
 const CardTitle = styled.h3`
@@ -96,6 +120,11 @@ const CardTitle = styled.h3`
   color: #4a3728;
   margin-bottom: 0.75rem;
   line-height: 1.3;
+
+  @media (max-width: 900px) {
+    font-size: 1rem;
+    margin-bottom: 0.5rem;
+  }
 `;
 
 const CardDesc = styled.p`
@@ -107,6 +136,12 @@ const CardDesc = styled.p`
   -webkit-line-clamp: 3;
   -webkit-box-orient: vertical;
   overflow: hidden;
+
+  @media (max-width: 900px) {
+    font-size: 0.8rem;
+    -webkit-line-clamp: 2;
+    margin-bottom: 0.75rem;
+  }
 `;
 
 const ReadMore = styled.div`
@@ -146,6 +181,12 @@ const SkeletonCard = styled.div`
   flex-direction: column;
   border: 1px solid rgba(74, 55, 40, 0.05);
   flex-shrink: 0;
+
+  @media (max-width: 900px) {
+    width: 240px;
+    height: 310px;
+    border-radius: 16px;
+  }
 `;
 
 const SkeletonImagePlaceholder = styled.div`
