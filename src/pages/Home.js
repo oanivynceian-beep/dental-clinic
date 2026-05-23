@@ -47,13 +47,13 @@ const servicesData = [
     category: "Braces",
     image: "https://images.unsplash.com/photo-1598256989800-fe5f95da9787?auto=format&fit=crop&q=80&w=1000",
     items: [
-      { 
-        name: "Braces (Upper and Lower Package)", 
-        description: "Inclusions: Free cleaning every 6 months, 1 free restoration (pasta), 1 free extraction (bunot)" 
+      {
+        name: "Braces (Upper and Lower Package)",
+        description: "Inclusions: Free cleaning every 6 months, 1 free restoration (pasta), 1 free extraction (bunot)"
       },
-      { 
-        name: "Braces (Upper or Lower only)", 
-        description: "Inclusion: Free cleaning every 6 months" 
+      {
+        name: "Braces (Upper or Lower only)",
+        description: "Inclusion: Free cleaning every 6 months"
       },
       { name: "Hawley's Retainers" },
       { name: "Clear Retainers" },
@@ -110,40 +110,14 @@ const HeroSection = styled.section`
 const HeroLeftPane = styled.div`
   flex: 1;
   position: relative;
-  background-image: url('https://images.unsplash.com/photo-1606811841689-23dfddce3e95?auto=format&fit=crop&q=80&w=1000');
+  background-image: url('/hero-image.png');
   background-size: cover;
   background-position: center;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-
-  &::before {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    background: rgba(255, 255, 255, 0.85);
-  }
 
   @media (max-width: 900px) {
     min-height: 45vh;
     width: 100%;
     padding-top: 80px;
-  }
-`;
-
-const HeroLogo = styled(motion.img)`
-  position: relative;
-  z-index: 2;
-  width: 80%;
-  max-width: 700px;
-
-  @media (max-width: 900px) {
-    width: 60%;
-    max-width: 300px;
-    margin-bottom: 20px;
   }
 `;
 
@@ -153,8 +127,9 @@ const HeroRightPane = styled.div`
   display: flex;
   flex-direction: column;
   justify-content: center;
-  padding: 60px 10%;
+  padding: 120px 10% 60px 10%;
   position: relative;
+  z-index: 2;
 
   @media (max-width: 900px) {
     flex: none;
@@ -162,6 +137,17 @@ const HeroRightPane = styled.div`
     align-items: center;
     text-align: center;
     min-height: 45vh;
+  }
+`;
+
+const HeroLogo = styled(motion.img)`
+  width: 70%;
+  max-width: 400px;
+  margin-bottom: 2rem;
+
+  @media (max-width: 900px) {
+    width: 60%;
+    max-width: 300px;
   }
 `;
 
@@ -465,7 +451,7 @@ const Home = () => {
 
   const handleSubmitComment = async (e) => {
     e.preventDefault();
-    
+
     if (!formData.name || !formData.email || !formData.comment) {
       setMessage('Please fill in all fields');
       return;
@@ -494,7 +480,8 @@ const Home = () => {
     <>
       <HeroSection>
         <Header />
-        <HeroLeftPane>
+        <HeroLeftPane />
+        <HeroRightPane>
           <HeroLogo
             src="/logo.png"
             alt="Dr. A Logo"
@@ -502,8 +489,6 @@ const Home = () => {
             animate={{ opacity: 1, scale: 1 }}
             transition={{ duration: 0.8, ease: 'easeOut' }}
           />
-        </HeroLeftPane>
-        <HeroRightPane>
           <Headline
             initial={{ opacity: 0, y: 30 }}
             animate={{ opacity: 1, y: 0 }}
@@ -545,9 +530,9 @@ const Home = () => {
                 viewport={{ once: true, margin: "-50px" }}
                 transition={{ duration: 0.5, delay: index * 0.1 }}
               >
-                <ServiceImage 
-                  src={service.image} 
-                  alt={service.category} 
+                <ServiceImage
+                  src={service.image}
+                  alt={service.category}
                   referrerPolicy="no-referrer"
                 />
                 <ServiceLabel>{service.category}</ServiceLabel>
@@ -611,13 +596,13 @@ const Home = () => {
         >
           <CommentForm onSubmit={handleSubmitComment}>
             <FormRow>
-              <Input 
+              <Input
                 placeholder="Your Name"
                 name="name"
                 value={formData.name}
                 onChange={handleInputChange}
               />
-              <Input 
+              <Input
                 placeholder="Your Email"
                 name="email"
                 type="email"
@@ -625,7 +610,7 @@ const Home = () => {
                 onChange={handleInputChange}
               />
             </FormRow>
-            <TextArea 
+            <TextArea
               placeholder="Write your comment here..."
               name="comment"
               value={formData.comment}
