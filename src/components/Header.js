@@ -11,7 +11,7 @@ import logo from "../logo2.png";
 
 const NavContainer = styled.header`
   position: fixed;
-  top: 10px;
+  top: 20px;
   left: 10px;
   right: 10px;
 
@@ -54,14 +54,14 @@ const Logo = styled.div`
   align-items: center;
 
   img {
-    height: 46px;
+    height: 56px;
 
     @media (max-width: 768px) {
-      height: 38px;
+      height: 48px;
     }
 
     @media (max-width: 480px) {
-      height: 32px;
+      height: 40px;
     }
   }
 `;

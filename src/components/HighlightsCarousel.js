@@ -242,7 +242,7 @@ const HighlightsCarousel = () => {
   if (isLoading) {
     return (
       <div style={{ width: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
-        <h2 style={{ color: '#4a3728', fontWeight: 900, fontSize: '2.2rem', marginBottom: '1rem' }}>
+        <h2 style={{ color: '#4a3728', fontWeight: 900, fontSize: '2.2rem', marginBottom: '0.5rem', marginTop: '2rem' }}>
           What's New
         </h2>
         <p style={{ color: '#6d4c41', marginBottom: '1rem', textAlign: 'center', maxWidth: '600px' }}>
@@ -279,7 +279,7 @@ const HighlightsCarousel = () => {
 
   return (
     <div style={{ width: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
-      <h2 style={{ color: '#4a3728', fontWeight: 900, fontSize: '2.2rem', marginBottom: '1rem' }}>
+      <h2 style={{ color: '#4a3728', fontWeight: 900, fontSize: '2.2rem', marginBottom: '0.5rem', marginTop: '2rem' }}>
         What's New
       </h2>
       <p style={{ color: '#6d4c41', marginBottom: '1rem', textAlign: 'center', maxWidth: '600px' }}>

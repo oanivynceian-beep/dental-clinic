@@ -170,6 +170,7 @@ const MainHeadline = styled(motion.h1)`
   line-height: 1.15;
   letter-spacing: -0.5px;
   margin-bottom: 40px;
+  margin-top: 60px;
   text-shadow: 0 0 20px rgba(255, 255, 255, 0.9);
 
   @media (max-width: 900px) {
