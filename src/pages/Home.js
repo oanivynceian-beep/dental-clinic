@@ -1,12 +1,93 @@
 import React, { useState } from 'react';
 import styled from 'styled-components';
-import { motion } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
 import Header from '../components/Header';
 import Footer from '../components/Footer';
 import HighlightsCarousel from '../components/HighlightsCarousel';
 import { useNavigate } from 'react-router-dom';
 import { db } from './firebase';
 import { collection, addDoc } from 'firebase/firestore';
+
+const servicesData = [
+  {
+    category: "Minor Services",
+    image: "https://images.unsplash.com/photo-1606811841689-23dfddce3e95?auto=format&fit=crop&q=80&w=1000",
+    items: [
+      { name: "Dental Check-up" },
+      { name: "Tooth Extraction (Front Tooth)" },
+      { name: "Tooth Extraction (Molar Tooth)" },
+      { name: "Tooth Restoration" },
+      { name: "Oral Prophylaxis" },
+      { name: "Fluoride Treatment" }
+    ]
+  },
+  {
+    category: "Dentures",
+    image: "https://images.unsplash.com/photo-1588776814546-1ffcf47267a5?auto=format&fit=crop&q=80&w=1000",
+    items: [
+      { name: "Removable Dentures (Plastic)" },
+      { name: "Removable Dentures (Porcelain)" },
+      { name: "Full Denture (Ordinary)" },
+      { name: "Full Denture (Ivocap)" },
+      { name: "Flexible Dentures (Unilateral)" },
+      { name: "Flexible Dentures (Bilateral)" },
+      { name: "Fixed Bridge (Ordinary or Plastic)" },
+      { name: "Fixed Bridge (Porcelain Fused to Metal - PFM)" },
+      { name: "Fixed Bridge (Ceramage)" },
+      { name: "Fixed Bridge (Tilite)" },
+      { name: "Fixed Bridge (Zirconia)" },
+      { name: "Crown or Jacket (Ordinary or Plastic)" },
+      { name: "Crown or Jacket (Porcelain Fused to Metal - PFM)" },
+      { name: "Crown or Jacket (Ceramage)" },
+      { name: "Crown or Jacket (Tilite)" },
+      { name: "Crown or Jacket (Zirconia)" }
+    ]
+  },
+  {
+    category: "Braces",
+    image: "https://images.unsplash.com/photo-1598256989800-fe5f95da9787?auto=format&fit=crop&q=80&w=1000",
+    items: [
+      { 
+        name: "Braces (Upper and Lower Package)", 
+        description: "Inclusions: Free cleaning every 6 months, 1 free restoration (pasta), 1 free extraction (bunot)" 
+      },
+      { 
+        name: "Braces (Upper or Lower only)", 
+        description: "Inclusion: Free cleaning every 6 months" 
+      },
+      { name: "Hawley's Retainers" },
+      { name: "Clear Retainers" },
+      { name: "Braces Removal" }
+    ]
+  },
+  {
+    category: "Veneers",
+    image: "https://images.unsplash.com/photo-1606811841689-23dfddce3e95?auto=format&fit=crop&q=80&w=1000",
+    items: [
+      { name: "Composite or Direct Veneers" },
+      { name: "Emax Veneers" },
+      { name: "Zirconia Veneers" }
+    ]
+  },
+  {
+    category: "Major Services",
+    image: "https://images.unsplash.com/photo-1588776814546-1ffcf47267a5?auto=format&fit=crop&q=80&w=1000",
+    items: [
+      { name: "Teeth Whitening" },
+      { name: "Root Canal Treatment" },
+      { name: "Diastema Closure" }
+    ]
+  },
+  {
+    category: "Major Major",
+    image: "https://images.unsplash.com/photo-1598256989800-fe5f95da9787?auto=format&fit=crop&q=80&w=1000",
+    items: [
+      { name: "Implants w/ Zirconia Crown" },
+      { name: "Odontectomy (Wisdom Tooth Extraction - Fully Erupted)" },
+      { name: "Odontectomy (Wisdom Tooth Extraction - Impacted)" }
+    ]
+  }
+];
 
 
 // --- Styled Components ---
@@ -17,76 +98,102 @@ const HeroSection = styled.section`
   height: 100vh;
   min-height: 600px;
   display: flex;
-  flex-direction: column;
-  align-items: center;
-  background-image: url('https://images.unsplash.com/photo-1629909613654-28e377c37b09?q=80&w=2068&auto=format&fit=crop');
+  overflow: hidden;
+
+  @media (max-width: 900px) {
+    flex-direction: column;
+    height: auto;
+    min-height: 100vh;
+  }
+`;
+
+const HeroLeftPane = styled.div`
+  flex: 1;
+  position: relative;
+  background-image: url('https://images.unsplash.com/photo-1606811841689-23dfddce3e95?auto=format&fit=crop&q=80&w=1000');
   background-size: cover;
   background-position: center;
-  background-repeat: no-repeat;
-  
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
   &::before {
     content: '';
     position: absolute;
     top: 0;
     left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(255, 255, 255, 0.85);
+  }
+
+  @media (max-width: 900px) {
+    min-height: 45vh;
     width: 100%;
-    height: 100%;
-    background: rgba(255, 255, 255, 0.15);
-    z-index: 0;
+    padding-top: 80px;
   }
 `;
 
-
-
-const ContentWrapper = styled(motion.div)`
+const HeroLogo = styled(motion.img)`
   position: relative;
-  z-index: 1;
+  z-index: 2;
+  width: 80%;
+  max-width: 700px;
+
+  @media (max-width: 900px) {
+    width: 60%;
+    max-width: 300px;
+    margin-bottom: 20px;
+  }
+`;
+
+const HeroRightPane = styled.div`
   flex: 1;
+  background-color: #f8f5f2;
   display: flex;
   flex-direction: column;
   justify-content: center;
-  align-items: center;
-  text-align: center;
-  max-width: 800px;
-  padding: 0 20px;
-  margin-top: -50px;
+  padding: 60px 10%;
+  position: relative;
+
+  @media (max-width: 900px) {
+    flex: none;
+    padding: 60px 8%;
+    align-items: center;
+    text-align: center;
+    min-height: 45vh;
+  }
 `;
 
-const Headline = styled.h1`
-  font-size: clamp(2rem, 5vw, 3.5rem);
-  color: #5d4037;
-  font-weight: 800;
-  margin-bottom: 10px;
-  line-height: 1.2;
-  text-shadow: 0 2px 10px rgba(255,255,255,0.5);
-`;
+const Headline = styled(motion.h1)`
+  font-size: clamp(2.5rem, 5vw, 4.5rem);
+  font-weight: 900;
+  color: #6a4b3d;
+  line-height: 1.1;
+  margin-bottom: 20px;
+  letter-spacing: -1px;
 
-const SubHeadline = styled.h2`
-  font-size: clamp(2rem, 5vw, 3.5rem);
-  color: #5d4037;
-  font-weight: 800;
-  margin-bottom: 40px;
-  line-height: 1.2;
-  text-shadow: 0 2px 10px rgba(255,255,255,0.5);
+  @media (max-width: 900px) {
+    font-size: 2.2rem;
+  }
 `;
 
 const CTAButton = styled.button`
-  background-color: #5d4037;
+  background-color: #6a4b3d;
   color: white;
   border: none;
-  padding: 18px 50px;
-  border-radius: 12px;
-  font-size: 1.2rem;
-  font-weight: 700;
+  padding: 14px 36px;
+  border-radius: 8px;
+  font-size: 1.1rem;
+  font-weight: 600;
   cursor: pointer;
-  box-shadow: 0 10px 25px rgba(93, 64, 55, 0.4);
-  transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+  transition: background 0.3s ease, transform 0.3s ease;
   animation: pulse 2s infinite;
 
   @keyframes pulse {
-    0% { transform: scale(1); box-shadow: 0 10px 25px rgba(93, 64, 55, 0.4); }
-    50% { transform: scale(1.05); box-shadow: 0 15px 35px rgba(93, 64, 55, 0.5); }
-    100% { transform: scale(1); box-shadow: 0 10px 25px rgba(93, 64, 55, 0.4); }
+    0% { transform: scale(1); }
+    50% { transform: scale(1.05); }
+    100% { transform: scale(1); }
   }
 
   &:hover {
@@ -128,14 +235,19 @@ const ServicesSection = styled.section`
 
 const ServicesGrid = styled.div`
   display: grid;
-  grid-template-columns: 1fr 1fr;
+  grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
   gap: 2rem;
   max-width: 1200px;
   margin: 0 auto;
+`;
 
-  @media (max-width: 768px) {
-    grid-template-columns: 1fr;
-  }
+const ServiceCardContainer = styled(motion.div)`
+  border-radius: 12px;
+  background: white;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
 `;
 
 const ServiceImage = styled(motion.img)`
@@ -147,11 +259,9 @@ const ServiceImage = styled(motion.img)`
 
 const ServiceCard = styled(motion.div)`
   position: relative;
-  border-radius: 12px;
-  overflow: hidden;
   aspect-ratio: 16 / 9;
-  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
   cursor: pointer;
+  overflow: hidden;
 
   &:hover ${ServiceImage} {
     transform: scale(1.1);
@@ -160,16 +270,16 @@ const ServiceCard = styled(motion.div)`
 
 const ServiceLabel = styled.div`
   position: absolute;
-  top: 2rem;
-  left: 2rem;
+  top: 1.5rem;
+  left: 1.5rem;
   background-color: #4a3728;
   color: white;
   padding: 0.75rem 1.5rem;
   font-weight: 700;
   text-transform: uppercase;
-  font-size: 1.125rem;
+  font-size: 1rem;
   letter-spacing: 0.5px;
-  box-shadow: 5px 5px 0px rgba(255, 255, 255, 0.2);
+  box-shadow: 4px 4px 0px rgba(255, 255, 255, 0.2);
   z-index: 2;
 
   @media (max-width: 640px) {
@@ -178,6 +288,63 @@ const ServiceLabel = styled.div`
     padding: 0.5rem 1rem;
     font-size: 0.9rem;
   }
+`;
+
+const ExpandIcon = styled.div`
+  position: absolute;
+  bottom: 1rem;
+  right: 1rem;
+  background-color: rgba(255, 255, 255, 0.95);
+  color: #4a3728;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  font-size: 1.5rem;
+  font-weight: bold;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.15);
+  z-index: 2;
+  transition: transform 0.3s ease;
+`;
+
+const ServiceDetails = styled(motion.div)`
+  padding: 0;
+  background: #faf8f5;
+  overflow: hidden;
+`;
+
+const ServiceList = styled.ul`
+  list-style: none;
+  padding: 1.5rem;
+  margin: 0;
+`;
+
+const ServiceItem = styled.li`
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  padding: 0.8rem 0;
+  border-bottom: 1px solid #e0e0e0;
+  font-size: 0.95rem;
+  color: #4a3728;
+
+  &:last-child {
+    border-bottom: none;
+  }
+`;
+
+const ServiceName = styled.span`
+  font-weight: 600;
+  white-space: pre-line;
+`;
+
+const ServiceDescription = styled.span`
+  font-size: 0.85rem;
+  color: #795548;
+  margin-top: 0.25rem;
+  white-space: pre-line;
 `;
 
 const CommentsSection = styled(motion.section)`
@@ -278,6 +445,15 @@ const Home = () => {
   const [formData, setFormData] = useState({ name: '', email: '', comment: '' });
   const [submitting, setSubmitting] = useState(false);
   const [message, setMessage] = useState('');
+  const [expandedService, setExpandedService] = useState(null);
+
+  const toggleService = (index) => {
+    if (expandedService === index) {
+      setExpandedService(null);
+    } else {
+      setExpandedService(index);
+    }
+  };
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
@@ -318,15 +494,33 @@ const Home = () => {
     <>
       <HeroSection>
         <Header />
-        <ContentWrapper
-          initial={{ opacity: 0, y: 30 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.8, ease: 'easeOut' }}
-        >
-          <Headline>Dedicated to Smiles,</Headline>
-          <SubHeadline>Anchored in Care</SubHeadline>
-          <CTAButton onClick={() => navigate('/book-now')}>Book Now!</CTAButton>
-        </ContentWrapper>
+        <HeroLeftPane>
+          <HeroLogo
+            src="/logo.png"
+            alt="Dr. A Logo"
+            initial={{ opacity: 0, scale: 0.9 }}
+            animate={{ opacity: 1, scale: 1 }}
+            transition={{ duration: 0.8, ease: 'easeOut' }}
+          />
+        </HeroLeftPane>
+        <HeroRightPane>
+          <Headline
+            initial={{ opacity: 0, y: 30 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.8, delay: 0.3 }}
+          >
+            Dedicated to Smiles,<br />
+            Anchored in Care
+          </Headline>
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.8, delay: 0.5 }}
+            style={{ marginTop: '20px' }}
+          >
+            <CTAButton onClick={() => navigate('/book-now')}>Book Now!</CTAButton>
+          </motion.div>
+        </HeroRightPane>
       </HeroSection>
 
       <HighlightsCarousel />
@@ -342,33 +536,48 @@ const Home = () => {
 
       <ServicesSection>
         <ServicesGrid>
-          <ServiceCard
-            initial={{ opacity: 0, x: -50 }}
-            whileInView={{ opacity: 1, x: 0 }}
-            viewport={{ once: false, margin: "-100px" }}
-            transition={{ duration: 0.6, delay: 0.2 }}
-          >
-            <ServiceImage 
-              src="https://images.unsplash.com/photo-1588776814546-1ffcf47267a5?auto=format&fit=crop&q=80&w=1000" 
-              alt="General Services" 
-              referrerPolicy="no-referrer"
-            />
-            <ServiceLabel>General Services</ServiceLabel>
-          </ServiceCard>
-          
-          <ServiceCard
-            initial={{ opacity: 0, x: 50 }}
-            whileInView={{ opacity: 1, x: 0 }}
-            viewport={{ once: false, margin: "-100px" }}
-            transition={{ duration: 0.6, delay: 0.4 }}
-          >
-            <ServiceImage 
-              src="https://images.unsplash.com/photo-1606811841689-23dfddce3e95?auto=format&fit=crop&q=80&w=1000" 
-              alt="Specialized Services" 
-              referrerPolicy="no-referrer"
-            />
-            <ServiceLabel>Specialized</ServiceLabel>
-          </ServiceCard>
+          {servicesData.map((service, index) => (
+            <ServiceCardContainer key={index} layout>
+              <ServiceCard
+                onClick={() => toggleService(index)}
+                initial={{ opacity: 0, y: 30 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true, margin: "-50px" }}
+                transition={{ duration: 0.5, delay: index * 0.1 }}
+              >
+                <ServiceImage 
+                  src={service.image} 
+                  alt={service.category} 
+                  referrerPolicy="no-referrer"
+                />
+                <ServiceLabel>{service.category}</ServiceLabel>
+                <ExpandIcon style={{ transform: expandedService === index ? 'rotate(180deg)' : 'rotate(0deg)' }}>
+                  {expandedService === index ? "−" : "+"}
+                </ExpandIcon>
+              </ServiceCard>
+              <AnimatePresence>
+                {expandedService === index && (
+                  <ServiceDetails
+                    initial={{ height: 0, opacity: 0 }}
+                    animate={{ height: "auto", opacity: 1 }}
+                    exit={{ height: 0, opacity: 0 }}
+                    transition={{ duration: 0.3 }}
+                  >
+                    <ServiceList>
+                      {service.items.map((item, idx) => (
+                        <ServiceItem key={idx}>
+                          <ServiceName>{item.name}</ServiceName>
+                          {item.description && (
+                            <ServiceDescription>{item.description}</ServiceDescription>
+                          )}
+                        </ServiceItem>
+                      ))}
+                    </ServiceList>
+                  </ServiceDetails>
+                )}
+              </AnimatePresence>
+            </ServiceCardContainer>
+          ))}
         </ServicesGrid>
       </ServicesSection>
 
