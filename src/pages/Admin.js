@@ -449,7 +449,7 @@ const TimeText = styled.h2`
   font-weight: 900;
   color: #4a3728;
   margin: 0;
-  font-family: 'Courier New', monospace;
+  font-family: 'Inter', sans-serif;
   letter-spacing: -1px;
   line-height: 1;
 
