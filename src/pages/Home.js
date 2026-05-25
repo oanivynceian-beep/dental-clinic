@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import styled from 'styled-components';
+import styled, { keyframes } from 'styled-components';
 import { motion, AnimatePresence } from "framer-motion";
 import Header from '../components/Header';
 import Footer from '../components/Footer';
@@ -190,27 +190,44 @@ const MainHeadline = styled(motion.h1)`
   }
 `;
 
+const pulse = keyframes`
+  0% {
+    transform: scale(1);
+    box-shadow: 0 6px 20px rgba(106, 75, 61, 0.35), 0 0 0 0 rgba(106, 75, 61, 0.4);
+  }
+  50% {
+    transform: scale(1.04);
+    box-shadow: 0 6px 25px rgba(106, 75, 61, 0.45), 0 0 0 15px rgba(106, 75, 61, 0);
+  }
+  100% {
+    transform: scale(1);
+    box-shadow: 0 6px 20px rgba(106, 75, 61, 0.35), 0 0 0 0 rgba(106, 75, 61, 0);
+  }
+`;
+
 const HeroButton = styled(motion.button)`
-  background-color: #6a4b3d;
+  background: linear-gradient(135deg, #8d6e63 0%, #5d4037 100%);
   color: white;
   border: none;
-  padding: 16px 48px;
-  border-radius: 12px;
+  padding: 18px 54px;
+  border-radius: 50px;
   font-weight: 800;
-  font-size: 1.3rem;
+  font-size: 1.4rem;
+  letter-spacing: 0.5px;
   cursor: pointer;
-  transition: all 0.3s ease;
-  box-shadow: 0 4px 15px rgba(106, 75, 61, 0.3);
+  animation: ${pulse} 2s infinite ease-in-out;
+  transition: background 0.3s ease, transform 0.3s ease, box-shadow 0.3s ease;
   
   &:hover {
-    background-color: #4e342e;
-    transform: translateY(-3px);
-    box-shadow: 0 6px 20px rgba(106, 75, 61, 0.4);
+    background: linear-gradient(135deg, #7b5e53 0%, #4e342e 100%);
+    transform: translateY(-3px) scale(1.05);
+    box-shadow: 0 10px 25px rgba(106, 75, 61, 0.5);
+    animation: none;
   }
 
   @media (max-width: 900px) {
-    padding: 14px 36px;
-    font-size: 1.1rem;
+    padding: 14px 38px;
+    font-size: 1.15rem;
   }
 `;
 
@@ -526,7 +543,7 @@ const Home = () => {
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.8, delay: 0.5 }}
           >
-            Book Here!
+            Book Now!
           </HeroButton>
         </HeroContent>
       </HeroSection>

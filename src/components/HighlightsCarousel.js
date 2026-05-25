@@ -242,7 +242,7 @@ const HighlightsCarousel = () => {
   if (isLoading) {
     return (
       <div style={{ width: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
-        <h2 style={{ color: '#4a3728', fontWeight: 900, fontSize: '2.2rem', marginBottom: '0.5rem', marginTop: '2rem' }}>
+        <h2 style={{ color: '#4a3728', fontWeight: 900, fontSize: '2.2rem', marginBottom: '0.2rem', marginTop: '5rem' }}>
           What's New
         </h2>
         <p style={{ color: '#6d4c41', marginBottom: '1rem', textAlign: 'center', maxWidth: '600px' }}>
@@ -279,26 +279,26 @@ const HighlightsCarousel = () => {
 
   return (
     <div style={{ width: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
-      <h2 style={{ color: '#4a3728', fontWeight: 900, fontSize: '2.2rem', marginBottom: '0.5rem', marginTop: '2rem' }}>
+      <h2 style={{ color: '#4a3728', fontWeight: 900, fontSize: '2.2rem', marginBottom: '0.2rem', marginTop: '5rem' }}>
         What's New
       </h2>
       <p style={{ color: '#6d4c41', marginBottom: '1rem', textAlign: 'center', maxWidth: '600px' }}>
         Discover our latest updates, advanced treatments, and clinic highlights.
       </p>
-      
+
       <CarouselContainer>
         <CarouselTrack>
           {repeatedData.map((item, index) => (
-            <HighlightCard 
+            <HighlightCard
               key={`${item.id}-${index}`}
               whileHover={{ y: -10 }}
               onClick={() => navigate(`/article/${item.id}`)}
             >
               <CardImage $src={
-            item.image && typeof item.image.toUint8Array === 'function'
-              ? URL.createObjectURL(new Blob([item.image.toUint8Array()]))
-              : item.image
-          } />
+                item.image && typeof item.image.toUint8Array === 'function'
+                  ? URL.createObjectURL(new Blob([item.image.toUint8Array()]))
+                  : item.image
+              } />
               <CardContent>
                 <CardTitle>{item.title}</CardTitle>
                 <CardDesc>{item.description}</CardDesc>
