@@ -124,7 +124,7 @@ const Contact = () => {
               <Mail size={28} />
             </IconWrapper>
             <CardTitle>Email</CardTitle>
-            <CardText>drdentalclinic@gmail.com</CardText>
+            <CardText>dradentalclinic0410@gmail.com</CardText>
           </ContactCard>
           <ContactCard>
             <IconWrapper>

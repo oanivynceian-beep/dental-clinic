@@ -202,7 +202,7 @@ const Footer = () => {
 
           <ContactItem>
             <Clock />
-            <span>drdentalclinic@gmail.com</span>
+            <span>dradentalclinic0410@gmail.com</span>
           </ContactItem>
         </FooterColumn>
 
