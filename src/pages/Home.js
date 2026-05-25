@@ -100,10 +100,19 @@ const HeroSection = styled.section`
   display: flex;
   justify-content: center;
   align-items: center;
-  background-image: url('/hero-image.png');
-  background-size: cover;
-  background-position: center;
   overflow: hidden;
+
+  &::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background-image: url('/hero-image.png');
+    background-size: cover;
+    background-position: center;
+    background-repeat: no-repeat;
+    transform: scale(1.15);
+    z-index: 0;
+  }
 
   &::before {
     content: '';
@@ -241,6 +250,7 @@ const ServicesGrid = styled.div`
   gap: 2rem;
   max-width: 1200px;
   margin: 0 auto;
+  align-items: start;
 `;
 
 const ServiceCardContainer = styled(motion.div)`
