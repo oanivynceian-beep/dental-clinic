@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import styled, { keyframes } from 'styled-components';
 import { motion, AnimatePresence } from "framer-motion";
 import Header from '../components/Header';
@@ -6,85 +6,70 @@ import Footer from '../components/Footer';
 import HighlightsCarousel from '../components/HighlightsCarousel';
 import { useNavigate } from 'react-router-dom';
 import { db } from './firebase';
-import { collection, addDoc } from 'firebase/firestore';
+import { collection, addDoc, getDocs } from 'firebase/firestore';
 
 const servicesData = [
   {
-    category: "Minor Services",
-    image: "https://images.unsplash.com/photo-1606811841689-23dfddce3e95?auto=format&fit=crop&q=80&w=1000",
+    category: "Veneers",
+    image: "https://upload.wikimedia.org/wikipedia/commons/f/f5/Comparison_-_Crowns_and_veneer.jpg",
     items: [
-      { name: "Dental Check-up" },
-      { name: "Tooth Extraction (Front Tooth)" },
-      { name: "Tooth Extraction (Molar Tooth)" },
-      { name: "Tooth Restoration" },
-      { name: "Oral Prophylaxis" },
-      { name: "Fluoride Treatment" }
+      { name: "VENEERS COMPOSITE OR DIRECT - 4500 per tooth" },
+      { name: "VENEERS EMAX - 20000 per tooth" },
+      { name: "VENEERS ZIRCONIA - 25000 per tooth" }
     ]
   },
   {
     category: "Dentures",
-    image: "https://images.unsplash.com/photo-1588776814546-1ffcf47267a5?auto=format&fit=crop&q=80&w=1000",
+    image: "https://upload.wikimedia.org/wikipedia/commons/e/ea/Mr_M%27s_Complete_Denture2.jpg",
     items: [
-      { name: "Removable Dentures (Plastic)" },
-      { name: "Removable Dentures (Porcelain)" },
-      { name: "Full Denture (Ordinary)" },
-      { name: "Full Denture (Ivocap)" },
-      { name: "Flexible Dentures (Unilateral)" },
-      { name: "Flexible Dentures (Bilateral)" },
-      { name: "Fixed Bridge (Ordinary or Plastic)" },
-      { name: "Fixed Bridge (Porcelain Fused to Metal - PFM)" },
-      { name: "Fixed Bridge (Ceramage)" },
-      { name: "Fixed Bridge (Tilite)" },
-      { name: "Fixed Bridge (Zirconia)" },
-      { name: "Crown or Jacket (Ordinary or Plastic)" },
-      { name: "Crown or Jacket (Porcelain Fused to Metal - PFM)" },
-      { name: "Crown or Jacket (Ceramage)" },
-      { name: "Crown or Jacket (Tilite)" },
-      { name: "Crown or Jacket (Zirconia)" }
+      { name: "REMOVABLE DENTURE - Plastic - 2000 per missing tooth" },
+      { name: "REMOVABLE DENTURE - Porcelain - 2500 per missing tooth" },
+      { name: "FULL DENTURE (ORDINARY) - 13000 per arch" },
+      { name: "IVOCAP - 25000 per arch" }
     ]
   },
   {
-    category: "Braces",
-    image: "https://images.unsplash.com/photo-1598256989800-fe5f95da9787?auto=format&fit=crop&q=80&w=1000",
+    category: "Retainers",
+    image: "https://upload.wikimedia.org/wikipedia/commons/d/d7/Retainer.jpg",
     items: [
-      {
-        name: "Braces (Upper and Lower Package)",
-        description: "Inclusions: Free cleaning every 6 months, 1 free restoration (pasta), 1 free extraction (bunot)"
-      },
-      {
-        name: "Braces (Upper or Lower only)",
-        description: "Inclusion: Free cleaning every 6 months"
-      },
-      { name: "Hawley's Retainers" },
-      { name: "Clear Retainers" },
-      { name: "Braces Removal" }
-    ]
-  },
-  {
-    category: "Veneers",
-    image: "https://images.unsplash.com/photo-1606811841689-23dfddce3e95?auto=format&fit=crop&q=80&w=1000",
-    items: [
-      { name: "Composite or Direct Veneers" },
-      { name: "Emax Veneers" },
-      { name: "Zirconia Veneers" }
+      { name: "HAWLEY'S RETAINERS - 7000 per arch" },
+      { name: "CLEAR RETAINERS - 10000 per arch" }
     ]
   },
   {
     category: "Major Services",
-    image: "https://images.unsplash.com/photo-1588776814546-1ffcf47267a5?auto=format&fit=crop&q=80&w=1000",
+    image: "https://upload.wikimedia.org/wikipedia/commons/d/db/GI_at_Guantanamo_visits_the_dentist.JPG",
     items: [
-      { name: "Teeth Whitening" },
-      { name: "Root Canal Treatment" },
-      { name: "Diastema Closure" }
+      { name: "REMOVABLE DENTURE" },
+      { name: "FIXED/CROWN BRIDGES" },
+      { name: "VENEERS" },
+      { name: "RETAINERS" },
+      { name: "TEETH WHITENING" },
+      { name: "GINGIVECTOMY (GUM CONTOURING)" },
+      { name: "ODONTECTOMY (WISDOM TOOTH EXTRACTION)" },
+      { name: "FRENECTOMY" },
+      { name: "ROOT CANAL TREATMENT" },
+      { name: "IMPLANTS WITH ZIRCONIA" },
+      { name: "DIASTEMA CLOSURE" }
     ]
   },
   {
-    category: "Major Special Services",
-    image: "https://images.unsplash.com/photo-1598256989800-fe5f95da9787?auto=format&fit=crop&q=80&w=1000",
+    category: "Minor Services",
+    image: "https://upload.wikimedia.org/wikipedia/commons/d/d9/Dental_Hygienist.jpg",
     items: [
-      { name: "Implants w/ Zirconia Crown" },
-      { name: "Odontectomy (Wisdom Tooth Extraction - Fully Erupted)" },
-      { name: "Odontectomy (Wisdom Tooth Extraction - Impacted)" }
+      { name: "FLUORIDE APPLICATION" },
+      { name: "TOOTH RESTORATION (PASTA)" },
+      { name: "TOOTH EXTRACTION (BUNOT)" },
+      { name: "ORAL PROPHYLAXIS (CLEANING)" },
+      { name: "TEMPORARY CROWNS" }
+    ]
+  },
+  {
+    category: "Braces",
+    image: "https://upload.wikimedia.org/wikipedia/commons/e/e1/Orthobraces_-_dental_braces_lower_upper_jaw.jpg",
+    items: [
+      { name: "BRACES PACKAGE - Upper and Lower - 45000" },
+      { name: "BRACES PACKAGE - Upper or Lower only - 25000" }
     ]
   }
 ];
@@ -337,7 +322,6 @@ const ExpandIcon = styled.div`
   z-index: 2;
   transition: transform 0.3s ease;
 `;
-
 const ServiceDetails = styled(motion.div)`
   padding: 0;
   background: #faf8f5;
@@ -475,6 +459,49 @@ const Home = () => {
   const [submitting, setSubmitting] = useState(false);
   const [message, setMessage] = useState('');
   const [expandedService, setExpandedService] = useState(null);
+  const [services, setServices] = useState(servicesData);
+
+  useEffect(() => {
+    const fetchServices = async () => {
+      try {
+        const querySnapshot = await getDocs(collection(db, 'services'));
+        if (!querySnapshot.empty) {
+          const categoryMapping = {
+            minor: { title: "Minor Services", image: "https://upload.wikimedia.org/wikipedia/commons/d/d9/Dental_Hygienist.jpg" },
+            major: { title: "Major Services", image: "https://upload.wikimedia.org/wikipedia/commons/d/db/GI_at_Guantanamo_visits_the_dentist.JPG" },
+            dentures: { title: "Dentures", image: "https://upload.wikimedia.org/wikipedia/commons/e/ea/Mr_M%27s_Complete_Denture2.jpg" },
+            braces: { title: "Braces", image: "https://upload.wikimedia.org/wikipedia/commons/e/e1/Orthobraces_-_dental_braces_lower_upper_jaw.jpg" },
+            veneers: { title: "Veneers", image: "https://upload.wikimedia.org/wikipedia/commons/f/f5/Comparison_-_Crowns_and_veneer.jpg" },
+            retainers: { title: "Retainers", image: "https://upload.wikimedia.org/wikipedia/commons/d/d7/Retainer.jpg" }
+          };
+
+          const grouped = {};
+          querySnapshot.docs.forEach(doc => {
+            const data = doc.data();
+            const type = data.type || 'other';
+            if (!grouped[type]) {
+              grouped[type] = [];
+            }
+            grouped[type].push({ name: data.name, description: data.description });
+          });
+
+          const fetchedServices = Object.keys(grouped).map(type => ({
+            category: categoryMapping[type]?.title || type,
+            image: categoryMapping[type]?.image || "https://images.unsplash.com/photo-1606811841689-23dfddce3e95?auto=format&fit=crop&q=80&w=1000",
+            items: grouped[type]
+          }));
+
+          if (fetchedServices.length > 0) {
+            setServices(fetchedServices);
+          }
+        }
+      } catch (error) {
+        console.error("Error fetching services: ", error);
+      }
+    };
+
+    fetchServices();
+  }, []);
 
   const toggleService = (index) => {
     if (expandedService === index) {
@@ -561,7 +588,7 @@ const Home = () => {
 
       <ServicesSection>
         <ServicesGrid>
-          {servicesData.map((service, index) => (
+          {services.map((service, index) => (
             <ServiceCardContainer key={index} layout>
               <ServiceCard
                 onClick={() => toggleService(index)}
