@@ -7,6 +7,12 @@ import HighlightsCarousel from '../components/HighlightsCarousel';
 import { useNavigate } from 'react-router-dom';
 import { db } from './firebase';
 import { collection, addDoc, getDocs } from 'firebase/firestore';
+import one from "../components/1.JPG";
+import two from "../components/2.JPG";
+import three from "../components/3.JPG";
+import four from "../components/4.JPG";
+import five from "../components/5.JPG";
+import six from "../components/6.JPG";
 
 const servicesData = [
   {
@@ -467,12 +473,12 @@ const Home = () => {
         const querySnapshot = await getDocs(collection(db, 'services'));
         if (!querySnapshot.empty) {
           const categoryMapping = {
-            minor: { title: "Minor Services", image: "https://upload.wikimedia.org/wikipedia/commons/d/d9/Dental_Hygienist.jpg" },
-            major: { title: "Major Services", image: "https://upload.wikimedia.org/wikipedia/commons/d/db/GI_at_Guantanamo_visits_the_dentist.JPG" },
-            dentures: { title: "Dentures", image: "https://upload.wikimedia.org/wikipedia/commons/e/ea/Mr_M%27s_Complete_Denture2.jpg" },
-            braces: { title: "Braces", image: "https://upload.wikimedia.org/wikipedia/commons/e/e1/Orthobraces_-_dental_braces_lower_upper_jaw.jpg" },
-            veneers: { title: "Veneers", image: "https://upload.wikimedia.org/wikipedia/commons/f/f5/Comparison_-_Crowns_and_veneer.jpg" },
-            retainers: { title: "Retainers", image: "https://upload.wikimedia.org/wikipedia/commons/d/d7/Retainer.jpg" }
+            minor: { title: "Minor Services", image: one },
+            major: { title: "Major Services", image: two },
+            dentures: { title: "Dentures", image: three },
+            braces: { title: "Braces", image: four },
+            veneers: { title: "Veneers", image: five },
+            retainers: { title: "Retainers", image: six }
           };
 
           const grouped = {};
