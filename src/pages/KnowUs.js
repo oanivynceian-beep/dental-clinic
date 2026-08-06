@@ -3,7 +3,9 @@ import styled from 'styled-components';
 import Header from '../components/Header';
 import { Heart, Users } from 'lucide-react';
 import Footer from '../components/Footer';
-
+import pic from '../components/7.JPG';
+import pic2 from '../components/8.JPG';
+import pic3 from '../components/9.JPG';
 
 
 
@@ -205,21 +207,21 @@ const KnowUs = () => {
           <KnowUsGrid>
             <KnowUsImageWrapper>
               <KnowUsImage
-                src="https://images.unsplash.com/photo-1606811971618-4486d14f3f99?auto=format&fit=crop&q=80&w=800"
+                src={pic}
                 alt="Dental Care"
                 referrerPolicy="no-referrer"
               />
             </KnowUsImageWrapper>
             <KnowUsImageWrapper>
               <KnowUsImage
-                src="https://images.unsplash.com/photo-1593022356769-11f762e25ed9?auto=format&fit=crop&q=80&w=800"
+                src={pic2}
                 alt="Dental Mirror"
                 referrerPolicy="no-referrer"
               />
             </KnowUsImageWrapper>
             <KnowUsImageWrapper>
               <KnowUsImage
-                src="https://www.universitydentalchoice.ca/wp-content/uploads/2026/02/dentist-near-pleasantview.webp"
+                src={pic3}
                 alt="Dentist and Child"
                 referrerPolicy="no-referrer"
               />
