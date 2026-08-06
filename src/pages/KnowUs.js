@@ -1,11 +1,13 @@
 import { motion } from "framer-motion";
-import styled from 'styled-components';
+import styled, { keyframes } from 'styled-components';
 import Header from '../components/Header';
 import { Heart, Users } from 'lucide-react';
 import Footer from '../components/Footer';
 import pic from '../components/7.JPG';
 import pic2 from '../components/8.JPG';
 import pic3 from '../components/9.JPG';
+import pic4 from '../components/10.JPG';
+import pic5 from '../components/11.JPG';
 
 
 
@@ -107,35 +109,72 @@ const KnowUsTitle = styled.h2`
   text-transform: capitalize;
 `;
 
-const KnowUsGrid = styled.div`
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 1.5rem;
-  max-width: 1400px;
-  margin: 0 auto;
+const scrollAnimation = keyframes`
+  0% { transform: translateX(0); }
+  100% { transform: translateX(calc(-25% - 0.375rem)); }
+`;
 
-  @media (max-width: 768px) {
-    grid-template-columns: 1fr;
+const CarouselContainer = styled.div`
+  width: 100%;
+  overflow: hidden;
+  padding: 1rem 0;
+  position: relative;
+
+  &::before,
+  &::after {
+    content: "";
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    width: 100px;
+    z-index: 2;
+    pointer-events: none;
+  }
+
+  &::before {
+    left: 0;
+    background: linear-gradient(to right, #fff, transparent);
+  }
+
+  &::after {
+    right: 0;
+    background: linear-gradient(to left, #fff, transparent);
   }
 `;
 
-const KnowUsImageWrapper = styled.div`
-  border-radius: 8px;
-  overflow: hidden;
-  aspect-ratio: 3 / 4;
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
-  background-color: #f9f9f9;
+const CarouselTrack = styled.div`
+  display: flex;
+  gap: 1.5rem;
+  width: max-content;
+  animation: ${scrollAnimation} 20s linear infinite;
+
+  &:hover {
+    animation-play-state: paused;
+  }
 `;
 
-const KnowUsImage = styled.img`
+const CarouselImageWrapper = styled.div`
+  border-radius: 12px;
+  overflow: hidden;
+  width: 350px;
+  aspect-ratio: 3 / 4;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.08);
+  flex-shrink: 0;
+  background-color: #f9f9f9;
+
+  @media (max-width: 768px) {
+    width: 280px;
+  }
+`;
+
+const CarouselImage = styled.img`
   width: 100%;
   height: 100%;
   object-fit: cover;
-  opacity: 0.9;
-  transition: opacity 0.3s ease;
+  transition: transform 0.4s ease;
 
   &:hover {
-    opacity: 1;
+    transform: scale(1.05);
   }
 `;
 
@@ -195,6 +234,19 @@ const LargeTeamIcon = styled(motion.div)`
 
 
 const KnowUs = () => {
+  // Array of images - add your 2 new pictures here!
+  // e.g. import pic4 from '../components/10.JPG'; and add { src: pic4, alt: "Description" }
+  const imageList = [
+    { src: pic, alt: "Dental Care" },
+    { src: pic2, alt: "Dental Mirror" },
+    { src: pic3, alt: "Dentist and Child" },
+    { src: pic4, alt: "New Image 1" },
+    { src: pic5, alt: "New Image 2" },
+  ];
+
+  // We duplicate the list 4 times so there's enough content to scroll infinitely even on ultra-wide screens
+  const infiniteImages = [...imageList, ...imageList, ...imageList, ...imageList];
+
   return (
     <>
       {/* Know Us Section First */}
@@ -204,29 +256,19 @@ const KnowUs = () => {
         </div>
         <KnowUsSection>
           <KnowUsTitle>Know us</KnowUsTitle>
-          <KnowUsGrid>
-            <KnowUsImageWrapper>
-              <KnowUsImage
-                src={pic}
-                alt="Dental Care"
-                referrerPolicy="no-referrer"
-              />
-            </KnowUsImageWrapper>
-            <KnowUsImageWrapper>
-              <KnowUsImage
-                src={pic2}
-                alt="Dental Mirror"
-                referrerPolicy="no-referrer"
-              />
-            </KnowUsImageWrapper>
-            <KnowUsImageWrapper>
-              <KnowUsImage
-                src={pic3}
-                alt="Dentist and Child"
-                referrerPolicy="no-referrer"
-              />
-            </KnowUsImageWrapper>
-          </KnowUsGrid>
+          <CarouselContainer>
+            <CarouselTrack>
+              {infiniteImages.map((img, index) => (
+                <CarouselImageWrapper key={index}>
+                  <CarouselImage
+                    src={img.src}
+                    alt={img.alt}
+                    referrerPolicy="no-referrer"
+                  />
+                </CarouselImageWrapper>
+              ))}
+            </CarouselTrack>
+          </CarouselContainer>
         </KnowUsSection>
       </PageContainer>
       {/* New Animated Section Second */}
