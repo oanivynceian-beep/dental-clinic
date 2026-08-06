@@ -336,8 +336,8 @@ const SubmitButton = styled(motion.button)`
   background-color: #4a3728;
   color: white;
   border: none;
-  padding: 1.5rem;
-  border-radius: 18px;
+  padding: 1.25rem 2rem;
+  border-radius: 16px;
   font-size: 1.1rem;
   font-weight: 800;
   cursor: pointer;
@@ -345,8 +345,9 @@ const SubmitButton = styled(motion.button)`
   align-items: center;
   justify-content: center;
   gap: 0.75rem;
-  box-shadow: 0 20px 40px rgba(74, 55, 40, 0.2);
-  margin-top: 1rem;
+  width: 100%;
+  box-shadow: 0 10px 30px rgba(74, 55, 40, 0.15);
+  margin-top: 0.5rem;
 
   &:disabled {
     opacity: 0.7;
@@ -356,17 +357,18 @@ const SubmitButton = styled(motion.button)`
 
 const TermsCheckboxContainer = styled.div`
   display: flex;
-  align-items: flex-start;
-  gap: 1rem;
-  margin-top: 1rem;
+  align-items: center;
+  gap: 0.75rem;
+  margin-top: 0.5rem;
 `;
 
 const Checkbox = styled.input`
-  margin-top: 0.25rem;
+  margin: 0;
   width: 1.25rem;
   height: 1.25rem;
   cursor: pointer;
   accent-color: #4a3728;
+  flex-shrink: 0;
 `;
 
 const TermsText = styled.p`
