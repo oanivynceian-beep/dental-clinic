@@ -576,7 +576,7 @@ const CalendarHeader = styled.div`
 
 const MonthYearLabel = styled.span`
   font-weight: 800;
-  font-size: 1.1rem;
+  font-size: 1.3rem;
   color: #4a3728;
   letter-spacing: 0.5px;
 `;
@@ -610,7 +610,7 @@ const DaysGrid = styled.div`
 
 const DayHeader = styled.div`
   text-align: center;
-  font-size: 0.75rem;
+  font-size: 0.9rem;
   font-weight: 700;
   color: #a1887f;
   text-transform: uppercase;
@@ -623,7 +623,7 @@ const DayCell = styled.button`
   aspect-ratio: 1;
   border: none;
   border-radius: 12px;
-  font-size: 0.95rem;
+  font-size: 1.15rem;
   font-weight: 600;
   cursor: ${props => (props.$disabled ? 'not-allowed' : 'pointer')};
   background: ${props => {
@@ -677,20 +677,20 @@ const DayCell = styled.button`
 
 const SlotBadge = styled.span`
   margin-top: 3px;
-  font-size: 0.62rem;
+  font-size: 0.75rem;
   font-weight: 800;
   line-height: 1;
   white-space: nowrap;
   letter-spacing: -0.2px;
   pointer-events: none;
-  color: ${p => p.$selected ? 'rgba(255,255,255,0.9)' :
+  color: ${p => p.$selected ? '#ffd54f' :
     p.$full ? '#e53935' :
       p.$low ? '#f57c00' :
         '#388e3c'
   };
 
   @media (max-width: 480px) {
-    font-size: 0.55rem;
+    font-size: 0.65rem;
     margin-top: 2px;
     letter-spacing: -0.3px;
   }
