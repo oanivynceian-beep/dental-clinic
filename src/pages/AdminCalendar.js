@@ -527,7 +527,7 @@ const AdminCalendar = () => {
 
   const sendReminderEmails = async () => {
     if (!selectedDate || dayBookings.length === 0) return;
-    
+
     setIsSendingReminders(true);
     try {
       // Format date
@@ -562,11 +562,11 @@ const AdminCalendar = () => {
           };
 
           await emailjs.send(
-            'service_bo0rrjf',
-            'template_dtn7txm',
+            'service_dpykpyo',
+            'template_rvomydb',
             templateParams,
             {
-              publicKey: 'igsa6b4JaCPQxbNFE',
+              publicKey: 'TnzGhY_Hc5PlG755v',
             }
           );
 
@@ -815,8 +815,8 @@ const AdminCalendar = () => {
                   {new Intl.DateTimeFormat('en-US', { weekday: 'long', month: 'long', day: 'numeric' }).format(selectedDate)}
                 </ModalTitle>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-                  <LoginButton 
-                    onClick={sendReminderEmails} 
+                  <LoginButton
+                    onClick={sendReminderEmails}
                     disabled={isSendingReminders}
                     style={{ padding: '0.75rem 1.5rem', fontSize: '0.95rem' }}
                   >
@@ -890,10 +890,10 @@ const AdminCalendar = () => {
 
       <AnimatePresence>
         {toast && (
-          <Toast 
-            $error={toast.error} 
-            initial={{ opacity: 0, y: 50 }} 
-            animate={{ opacity: 1, y: 0 }} 
+          <Toast
+            $error={toast.error}
+            initial={{ opacity: 0, y: 50 }}
+            animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: 50 }}
           >
             {toast.error ? <AlertCircle size={20} /> : <CheckCircle2 size={20} />}

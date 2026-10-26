@@ -485,22 +485,22 @@ const playNotificationSound = () => {
     const AudioContext = window.AudioContext || window.webkitAudioContext;
     if (!AudioContext) return;
     const ctx = new AudioContext();
-    
+
     // Play a nice melodic chime (C5, E5, G5, C6)
     const playNote = (frequency, startTime, duration) => {
       const osc = ctx.createOscillator();
       const gainNode = ctx.createGain();
-      
+
       osc.type = 'sine';
       osc.frequency.value = frequency;
-      
+
       gainNode.gain.setValueAtTime(0, startTime);
       gainNode.gain.linearRampToValueAtTime(0.3, startTime + duration * 0.1);
       gainNode.gain.exponentialRampToValueAtTime(0.01, startTime + duration);
-      
+
       osc.connect(gainNode);
       gainNode.connect(ctx.destination);
-      
+
       osc.start(startTime);
       osc.stop(startTime + duration);
     };
@@ -626,7 +626,7 @@ const Admin = () => {
         const newDocChanges = snapshot.docChanges().filter(change => change.type === 'added');
         if (newDocChanges.length > 0) {
           playNotificationSound();
-          
+
           const newNotifs = newDocChanges.map(change => {
             const data = change.doc.data();
             return {
@@ -831,11 +831,11 @@ const Admin = () => {
         // Send email using EmailJS
         emailjs
           .send(
-            'service_bo0rrjf',
-            'template_w7emoyl',
+            'service_dpykpyo',
+            'template_u7zxvov',
             templateParams,
             {
-              publicKey: 'igsa6b4JaCPQxbNFE',
+              publicKey: 'TnzGhY_Hc5PlG755v',
             }
           )
           .then(
@@ -929,7 +929,7 @@ const Admin = () => {
               </button>
             </div>
           </div>
-          
+
           <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', flexWrap: 'wrap', justifyContent: 'center' }}>
             <ClockContainer>
               <DateText>
@@ -941,8 +941,8 @@ const Admin = () => {
             </ClockContainer>
 
             <div style={{ position: 'relative' }}>
-              <button 
-                onClick={() => { setShowNotificationsModal(true); setUnreadCount(0); }} 
+              <button
+                onClick={() => { setShowNotificationsModal(true); setUnreadCount(0); }}
                 style={{ background: 'white', border: 'none', padding: '1rem', borderRadius: '50%', boxShadow: '0 5px 15px rgba(0,0,0,0.05)', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', transition: 'transform 0.2s' }}
                 onMouseEnter={(e) => e.currentTarget.style.transform = 'scale(1.05)'}
                 onMouseLeave={(e) => e.currentTarget.style.transform = 'scale(1)'}
@@ -950,7 +950,7 @@ const Admin = () => {
                 <Bell size={24} color="#4a3728" />
                 <AnimatePresence>
                   {unreadCount > 0 && (
-                    <motion.div 
+                    <motion.div
                       initial={{ scale: 0 }}
                       animate={{ scale: 1 }}
                       exit={{ scale: 0 }}
@@ -1388,11 +1388,11 @@ const Admin = () => {
               exit={{ x: '100%' }}
               transition={{ type: 'spring', bounce: 0, duration: 0.4 }}
               onClick={e => e.stopPropagation()}
-              style={{ 
-                height: '100vh', 
-                maxHeight: '100vh', 
-                width: '400px', 
-                maxWidth: '100%', 
+              style={{
+                height: '100vh',
+                maxHeight: '100vh',
+                width: '400px',
+                maxWidth: '100%',
                 borderRadius: '30px 0 0 30px',
                 padding: '2.5rem',
                 display: 'flex',
