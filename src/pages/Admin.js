@@ -1,7 +1,7 @@
 import React, { useState, useRef, useEffect, useMemo } from 'react';
 import styled from 'styled-components';
 import { motion, AnimatePresence } from "framer-motion";
-import { ChevronRight, ChevronLeft, Loader2, Lock, LogIn, Eye, EyeOff, LayoutGrid, List, X, Bell } from 'lucide-react';
+import { ChevronRight, ChevronLeft, Loader2, Lock, LogIn, Eye, EyeOff, LayoutGrid, List, X, Bell, CalendarPlus } from 'lucide-react';
 import { db } from './firebase';
 import { collection, onSnapshot, query, orderBy, updateDoc, doc } from 'firebase/firestore';
 import { useNavigate } from 'react-router-dom';
@@ -939,6 +939,36 @@ const Admin = () => {
                 {currentDate.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: true })}
               </TimeText>
             </ClockContainer>
+
+            <button
+              onClick={() => navigate('/book-now')}
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: '0.5rem',
+                background: '#4a3728',
+                color: 'white',
+                border: 'none',
+                padding: '0.75rem 1.35rem',
+                borderRadius: '16px',
+                fontWeight: 800,
+                fontSize: '0.9rem',
+                cursor: 'pointer',
+                boxShadow: '0 6px 16px rgba(74, 55, 40, 0.2)',
+                transition: 'all 0.2s ease',
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.transform = 'translateY(-2px)';
+                e.currentTarget.style.boxShadow = '0 10px 22px rgba(74, 55, 40, 0.28)';
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.transform = 'translateY(0)';
+                e.currentTarget.style.boxShadow = '0 6px 16px rgba(74, 55, 40, 0.2)';
+              }}
+            >
+              <CalendarPlus size={18} />
+              <span>Book Now</span>
+            </button>
 
             <div style={{ position: 'relative' }}>
               <button

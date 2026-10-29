@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import styled from 'styled-components';
 import { motion, AnimatePresence } from "framer-motion";
-import { ChevronRight, ChevronLeft, Loader2, Lock, LogIn, Eye, EyeOff, X, Mail, AlertCircle, CheckCircle2, Download } from 'lucide-react';
+import { ChevronRight, ChevronLeft, Loader2, Lock, LogIn, Eye, EyeOff, X, Mail, AlertCircle, CheckCircle2, Download, CalendarPlus } from 'lucide-react';
 import emailjs from '@emailjs/browser';
 import { db } from './firebase';
 import { collection, onSnapshot, query, orderBy } from 'firebase/firestore';
@@ -514,10 +514,8 @@ const AdminCalendar = () => {
 
   const openDayDetails = (dateObj) => {
     const matchingBookings = filteredBookings.filter(b => isSameDay(b.parsedDate, dateObj));
-    if (matchingBookings.length > 0) {
-      setSelectedDate(dateObj);
-      setDayBookings(matchingBookings);
-    }
+    setSelectedDate(dateObj);
+    setDayBookings(matchingBookings);
   };
 
   const showToast = (msg, error = false) => {
@@ -764,7 +762,30 @@ const AdminCalendar = () => {
                 </ControlButton>
               </div>
 
-              <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', flexWrap: 'wrap' }}>
+                <button
+                  onClick={() => navigate('/book-now')}
+                  style={{
+                    background: '#4a3728',
+                    border: 'none',
+                    padding: '0.55rem 1.25rem',
+                    borderRadius: '10px',
+                    fontSize: '0.9rem',
+                    fontWeight: 800,
+                    color: '#ffffff',
+                    cursor: 'pointer',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '0.5rem',
+                    boxShadow: '0 4px 12px rgba(74, 55, 40, 0.18)',
+                    transition: 'all 0.2s'
+                  }}
+                  onMouseEnter={(e) => { e.currentTarget.style.transform = 'translateY(-1px)'; }}
+                  onMouseLeave={(e) => { e.currentTarget.style.transform = 'translateY(0)'; }}
+                >
+                  <CalendarPlus size={18} />
+                  Book Now
+                </button>
                 <button
                   onClick={downloadMonthlyExcel}
                   style={{ background: '#e8f5e9', border: '1px solid #c8e6c9', padding: '0.5rem 1rem', borderRadius: '10px', fontSize: '0.9rem', fontWeight: 800, color: '#2e7d32', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '0.5rem', transition: 'all 0.2s' }}
@@ -814,11 +835,46 @@ const AdminCalendar = () => {
                 <ModalTitle>
                   {new Intl.DateTimeFormat('en-US', { weekday: 'long', month: 'long', day: 'numeric' }).format(selectedDate)}
                 </ModalTitle>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', flexWrap: 'wrap' }}>
+                  <button
+                    onClick={() => {
+                      const y = selectedDate.getFullYear();
+                      const m = String(selectedDate.getMonth() + 1).padStart(2, '0');
+                      const d = String(selectedDate.getDate()).padStart(2, '0');
+                      const dateStr = `${y}-${m}-${d}`;
+                      const branchParam = adminRole && adminRole !== 'superadmin' ? `&branch=${adminRole}` : '';
+                      navigate(`/book-now?date=${dateStr}${branchParam}`);
+                    }}
+                    style={{
+                      background: '#4a3728',
+                      border: 'none',
+                      color: 'white',
+                      padding: '0.75rem 1.3rem',
+                      borderRadius: '16px',
+                      fontWeight: 800,
+                      fontSize: '0.9rem',
+                      cursor: 'pointer',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '0.45rem',
+                      boxShadow: '0 4px 12px rgba(74, 55, 40, 0.2)',
+                      transition: 'all 0.2s'
+                    }}
+                    onMouseEnter={(e) => { e.currentTarget.style.transform = 'translateY(-1px)'; }}
+                    onMouseLeave={(e) => { e.currentTarget.style.transform = 'translateY(0)'; }}
+                  >
+                    <CalendarPlus size={16} />
+                    Book for this Day
+                  </button>
                   <LoginButton
                     onClick={sendReminderEmails}
-                    disabled={isSendingReminders}
-                    style={{ padding: '0.75rem 1.5rem', fontSize: '0.95rem' }}
+                    disabled={isSendingReminders || dayBookings.length === 0}
+                    style={{
+                      padding: '0.75rem 1.5rem',
+                      fontSize: '0.95rem',
+                      opacity: (isSendingReminders || dayBookings.length === 0) ? 0.5 : 1,
+                      cursor: (isSendingReminders || dayBookings.length === 0) ? 'not-allowed' : 'pointer'
+                    }}
                   >
                     {isSendingReminders ? (
                       <>
@@ -839,7 +895,57 @@ const AdminCalendar = () => {
               </ModalHeader>
 
               <ModalBody>
-                {dayBookings.map(b => (
+                {dayBookings.length === 0 ? (
+                  <div style={{ textAlign: 'center', padding: '3rem 1.5rem', color: '#bcaaa4' }}>
+                    <div style={{
+                      width: '64px',
+                      height: '64px',
+                      borderRadius: '50%',
+                      background: '#fdfaf7',
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      marginBottom: '1rem',
+                      color: '#4a3728'
+                    }}>
+                      <CalendarPlus size={32} />
+                    </div>
+                    <h3 style={{ fontSize: '1.2rem', fontWeight: 800, color: '#4a3728', marginBottom: '0.5rem' }}>
+                      No appointments scheduled for this date
+                    </h3>
+                    <p style={{ fontSize: '0.9rem', marginBottom: '1.5rem', color: '#8d6e63' }}>
+                      You can schedule a new patient booking directly for this day.
+                    </p>
+                    <button
+                      onClick={() => {
+                        const y = selectedDate.getFullYear();
+                        const m = String(selectedDate.getMonth() + 1).padStart(2, '0');
+                        const d = String(selectedDate.getDate()).padStart(2, '0');
+                        const dateStr = `${y}-${m}-${d}`;
+                        const branchParam = adminRole && adminRole !== 'superadmin' ? `&branch=${adminRole}` : '';
+                        navigate(`/book-now?date=${dateStr}${branchParam}`);
+                      }}
+                      style={{
+                        background: '#4a3728',
+                        border: 'none',
+                        color: 'white',
+                        padding: '0.75rem 1.5rem',
+                        borderRadius: '14px',
+                        fontWeight: 800,
+                        fontSize: '0.95rem',
+                        cursor: 'pointer',
+                        display: 'inline-flex',
+                        alignItems: 'center',
+                        gap: '0.5rem',
+                        boxShadow: '0 4px 14px rgba(74, 55, 40, 0.2)'
+                      }}
+                    >
+                      <CalendarPlus size={18} />
+                      Book Appointment for this Date
+                    </button>
+                  </div>
+                ) : (
+                  dayBookings.map(b => (
                   <DayBookingCard key={b.id} $status={b.status}>
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
                       <h3 style={{ fontSize: '1.4rem', fontWeight: 900, color: '#4a3728', margin: 0 }}>
@@ -881,7 +987,8 @@ const AdminCalendar = () => {
                       </div>
                     </div>
                   </DayBookingCard>
-                ))}
+                ))
+              )}
               </ModalBody>
             </ModalContainer>
           </ModalOverlay>

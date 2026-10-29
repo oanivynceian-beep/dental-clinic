@@ -1,9 +1,9 @@
 import React, { useState, useEffect, useMemo, useRef } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import styled, { keyframes } from 'styled-components';
 import { motion, AnimatePresence } from "framer-motion";
 import Header from '../components/Header';
-import { User, Phone, MessageSquare, Mail, CheckCircle2, ArrowRight, Loader2, ChevronLeft, ChevronRight, ChevronDown, MapPin, X, Home, CalendarPlus, Clock, Download, Stethoscope } from 'lucide-react';
+import { User, Phone, MessageSquare, Mail, CheckCircle2, ArrowRight, Loader2, ChevronLeft, ChevronRight, ChevronDown, MapPin, X, Home, CalendarPlus, Clock, Download, Stethoscope, LayoutDashboard, CalendarCheck, ShieldCheck } from 'lucide-react';
 import html2canvas from 'html2canvas';
 import { db } from './firebase';
 import {
@@ -975,6 +975,125 @@ const CustomDropdown = ({ value, onChange, placeholder, options, icon: IconCompo
   );
 };
 
+// Styled components for Admin Booking Portal
+const AdminBanner = styled.div`
+  width: 100%;
+  background: linear-gradient(135deg, #4a3728 0%, #2e2118 100%);
+  color: white;
+  border-radius: 24px;
+  padding: 1.25rem 2rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 1.25rem;
+  box-shadow: 0 10px 30px rgba(74, 55, 40, 0.22);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  margin-bottom: 2.5rem;
+  position: relative;
+  z-index: 10;
+
+  @media (max-width: 768px) {
+    padding: 1.25rem;
+    flex-direction: column;
+    align-items: stretch;
+  }
+`;
+
+const AdminBannerInfo = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+
+  .badge {
+    background: #ffb74d;
+    color: #4a3728;
+    font-weight: 900;
+    font-size: 0.75rem;
+    padding: 0.25rem 0.65rem;
+    border-radius: 8px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+`;
+
+const AdminBannerActions = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+
+  @media (max-width: 768px) {
+    justify-content: flex-start;
+  }
+`;
+
+const AdminNavButton = styled.button`
+  background: rgba(255, 255, 255, 0.15);
+  color: white;
+  border: 1px solid rgba(255, 255, 255, 0.25);
+  padding: 0.65rem 1.15rem;
+  border-radius: 12px;
+  font-size: 0.85rem;
+  font-weight: 700;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  transition: all 0.2s;
+
+  &:hover {
+    background: rgba(255, 255, 255, 0.25);
+    transform: translateY(-1px);
+  }
+`;
+
+const AdminControlCard = styled.div`
+  background: #fdfaf7;
+  border: 2px dashed #bcaaa4;
+  border-radius: 20px;
+  padding: 1.5rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+`;
+
+const AdminControlHeader = styled.div`
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+`;
+
+const StatusToggleGroup = styled.div`
+  display: flex;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+`;
+
+const StatusToggleButton = styled.button`
+  flex: 1;
+  min-width: 160px;
+  padding: 0.75rem 1rem;
+  border-radius: 12px;
+  border: 2px solid ${props => props.$active ? '#4a3728' : '#e0e0e0'};
+  background: ${props => props.$active ? '#4a3728' : 'white'};
+  color: ${props => props.$active ? 'white' : '#6d4c41'};
+  font-weight: 800;
+  font-size: 0.85rem;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  transition: all 0.2s;
+
+  &:hover {
+    border-color: #4a3728;
+  }
+`;
+
 // Services will be fetched from Firestore
 
 /* ========================
@@ -983,16 +1102,29 @@ const CustomDropdown = ({ value, onChange, placeholder, options, icon: IconCompo
 
 const BookNow = () => {
   const navigate = useNavigate();
+  const location = useLocation();
+
+  const ACCOUNTS = {
+    'admin123': 'superadmin',
+    'matina123': 'matina',
+    'sasa123': 'sasa'
+  };
+
+  const savedAuth = typeof window !== 'undefined' ? sessionStorage.getItem('admin_auth') : null;
+  const isAdmin = Boolean(savedAuth && ACCOUNTS[savedAuth]);
+  const adminRole = savedAuth && ACCOUNTS[savedAuth] ? ACCOUNTS[savedAuth] : '';
+
   const [isSubmitted, setIsSubmitted] = useState(false);
   const [showConfirmation, setShowConfirmation] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
-  const [agreedToTerms, setAgreedToTerms] = useState(false);
+  const [agreedToTerms, setAgreedToTerms] = useState(isAdmin);
   const [showTermsModal, setShowTermsModal] = useState(false);
+  const [adminBookingStatus, setAdminBookingStatus] = useState('approved');
   const [formData, setFormData] = useState({
     fullName: '',
     email: '',
     phone: '',
-    branch: '',
+    branch: (isAdmin && (adminRole === 'sasa' || adminRole === 'matina')) ? adminRole : '',
     date: '',
     time: '',
     reason: '',
@@ -1000,7 +1132,29 @@ const BookNow = () => {
     dentist: ''
   });
 
-  // Calendar availability settings — per branch
+  // Parse URL query parameters (e.g. ?date=YYYY-MM-DD&branch=sasa) and sync admin role
+  useEffect(() => {
+    const params = new URLSearchParams(location.search);
+    const dateParam = params.get('date');
+    const branchParam = params.get('branch');
+
+    setFormData(prev => {
+      let updated = { ...prev };
+      if (dateParam && /^\d{4}-\d{2}-\d{2}$/.test(dateParam)) {
+        updated.date = dateParam;
+      }
+      if (branchParam && (branchParam === 'sasa' || branchParam === 'matina')) {
+        updated.branch = branchParam;
+      } else if (isAdmin && (adminRole === 'sasa' || adminRole === 'matina') && !prev.branch) {
+        updated.branch = adminRole;
+      }
+      return updated;
+    });
+
+    if (isAdmin) {
+      setAgreedToTerms(true);
+    }
+  }, [location.search, isAdmin, adminRole]);
   const [settingsSasa, setSettingsSasa] = useState({ blockedDates: [], maxReservationsPerDay: 10, maxReservationsPerSlot: 1, dateCaps: {}, disabledServicesByDate: {} });
   const [settingsMatina, setSettingsMatina] = useState({ blockedDates: [], maxReservationsPerDay: 10, maxReservationsPerSlot: 1, dateCaps: {}, disabledServicesByDate: {} });
   const [globalServices, setGlobalServices] = useState({ major: [], minor: [], dentures: [], braces: [], veneers: [], retainers: [] });
@@ -1144,7 +1298,8 @@ const BookNow = () => {
 
       await addDoc(collection(db, 'bookings'), {
         ...submissionData,
-        status: 'pending',
+        status: isAdmin ? adminBookingStatus : 'pending',
+        bookedBy: isAdmin ? `admin_${adminRole}` : 'online',
         createdAt: serverTimestamp()
       });
       setShowConfirmation(false);
@@ -1192,12 +1347,12 @@ const BookNow = () => {
 
   const handleBookAnother = () => {
     setIsSubmitted(false);
-    setAgreedToTerms(false);
+    setAgreedToTerms(isAdmin);
     setFormData({
       fullName: '',
       email: '',
       phone: '',
-      branch: '',
+      branch: (isAdmin && (adminRole === 'sasa' || adminRole === 'matina')) ? adminRole : '',
       date: '',
       time: '',
       reason: '',
@@ -1234,21 +1389,54 @@ const BookNow = () => {
       />
 
       <ContentSection>
+        {isAdmin && (
+          <AdminBanner>
+            <AdminBannerInfo>
+              <div style={{ background: 'rgba(255, 255, 255, 0.1)', padding: '0.75rem', borderRadius: '16px', display: 'flex' }}>
+                <ShieldCheck size={28} color="#ffb74d" />
+              </div>
+              <div>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem', flexWrap: 'wrap' }}>
+                  <span style={{ fontWeight: 900, fontSize: '1.1rem', letterSpacing: '-0.3px' }}>
+                    Admin Booking Portal
+                  </span>
+                  <span className="badge">
+                    {adminRole === 'superadmin' ? 'Superadmin' : `${adminRole.toUpperCase()} Branch`}
+                  </span>
+                </div>
+                <p style={{ margin: '0.2rem 0 0', fontSize: '0.85rem', color: '#d7ccc8' }}>
+                  Booking as clinic administrator. Appointments submitted here are logged directly into the clinic system.
+                </p>
+              </div>
+            </AdminBannerInfo>
+            <AdminBannerActions>
+              <AdminNavButton onClick={() => navigate('/admin')}>
+                <LayoutDashboard size={16} /> Dashboard
+              </AdminNavButton>
+              <AdminNavButton onClick={() => navigate('/admin/calendar')}>
+                <CalendarCheck size={16} /> Appointment Calendar
+              </AdminNavButton>
+            </AdminBannerActions>
+          </AdminBanner>
+        )}
+
         <HeaderGroup>
           <Title
             initial={{ opacity: 0, y: 30 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.8 }}
           >
-            Book Now!
+            {isAdmin ? 'Admin New Booking' : 'Book Now!'}
           </Title>
           <Subtitle
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             transition={{ duration: 0.8, delay: 0.2 }}
           >
-            Take the first step towards a healthier, brighter smile.
-            Fill out the form below and we'll handle the rest.
+            {isAdmin 
+              ? 'Schedule a patient walk-in, phone reservation, or confirmed clinic appointment.'
+              : 'Take the first step towards a healthier, brighter smile. Fill out the form below and we\'ll handle the rest.'
+            }
           </Subtitle>
         </HeaderGroup>
 
@@ -1540,6 +1728,39 @@ const BookNow = () => {
               />
             </FormGroup>
 
+            {isAdmin && (
+              <AdminControlCard>
+                <AdminControlHeader>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontWeight: 800, color: '#4a3728' }}>
+                    <ShieldCheck size={18} color="#4a3728" />
+                    <span>Admin Booking Controls</span>
+                  </div>
+                  <span style={{ fontSize: '0.8rem', color: '#8d6e63', fontWeight: 600 }}>
+                    Staff Elevated Access
+                  </span>
+                </AdminControlHeader>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+                  <Label style={{ fontSize: '0.85rem' }}>Initial Appointment Status</Label>
+                  <StatusToggleGroup>
+                    <StatusToggleButton
+                      type="button"
+                      $active={adminBookingStatus === 'approved'}
+                      onClick={() => setAdminBookingStatus('approved')}
+                    >
+                      <CheckCircle2 size={16} /> Auto-Approve (Direct Booking)
+                    </StatusToggleButton>
+                    <StatusToggleButton
+                      type="button"
+                      $active={adminBookingStatus === 'pending'}
+                      onClick={() => setAdminBookingStatus('pending')}
+                    >
+                      <Clock size={16} /> Mark as Pending (Needs Review)
+                    </StatusToggleButton>
+                  </StatusToggleGroup>
+                </div>
+              </AdminControlCard>
+            )}
+
             <TermsCheckboxContainer>
               <Checkbox
                 type="checkbox"
@@ -1699,7 +1920,7 @@ const BookNow = () => {
               transition={{ type: 'spring', damping: 25, stiffness: 300 }}
               onClick={(e) => e.stopPropagation()}
             >
-              <ModalCloseButton onClick={handleGoHome}>
+              <ModalCloseButton onClick={isAdmin ? () => navigate('/admin') : handleGoHome}>
                 <X size={16} />
               </ModalCloseButton>
 
@@ -1711,10 +1932,14 @@ const BookNow = () => {
                 <CheckCircle2 size={48} color="#4caf50" />
               </ModalIconRing>
 
-              <ModalTitle>Booking Confirmed!</ModalTitle>
+              <ModalTitle>
+                {isAdmin ? 'Appointment Booked Successfully!' : 'Booking Confirmed!'}
+              </ModalTitle>
               <ModalSubtext>
-                Thank you for choosing Dr. A Dental Clinic.<br />
-                We'll contact you shortly to finalize your schedule.
+                {isAdmin 
+                  ? `The appointment has been recorded with ${adminBookingStatus === 'approved' ? 'Approved' : 'Pending'} status.`
+                  : 'Thank you for choosing Dr. A Dental Clinic.\nWe\'ll contact you shortly to finalize your schedule.'
+                }
               </ModalSubtext>
 
               <ModalSummary>
@@ -1790,30 +2015,69 @@ const BookNow = () => {
               </div>
 
               <ModalActions data-hide-for-png>
-                <ModalButton
-                  $variant="outline"
-                  onClick={handleBookAnother}
-                  whileHover={{ scale: 1.02 }}
-                  whileTap={{ scale: 0.98 }}
-                >
-                  <CalendarPlus size={18} /> Book Another
-                </ModalButton>
-                <ModalButton
-                  onClick={handleSaveAsPng}
-                  $variant="outline"
-                  whileHover={{ scale: 1.02 }}
-                  whileTap={{ scale: 0.98 }}
-                  style={{ background: '#f1f8e9', borderColor: '#aed581', color: '#388e3c' }}
-                >
-                  <Download size={18} /> Save as PNG
-                </ModalButton>
-                <ModalButton
-                  onClick={handleGoHome}
-                  whileHover={{ scale: 1.02 }}
-                  whileTap={{ scale: 0.98 }}
-                >
-                  <Home size={18} /> Go Home
-                </ModalButton>
+                {isAdmin ? (
+                  <>
+                    <ModalButton
+                      $variant="outline"
+                      onClick={handleBookAnother}
+                      whileHover={{ scale: 1.02 }}
+                      whileTap={{ scale: 0.98 }}
+                    >
+                      <CalendarPlus size={18} /> Book Another
+                    </ModalButton>
+                    <ModalButton
+                      onClick={handleSaveAsPng}
+                      $variant="outline"
+                      whileHover={{ scale: 1.02 }}
+                      whileTap={{ scale: 0.98 }}
+                      style={{ background: '#f1f8e9', borderColor: '#aed581', color: '#388e3c' }}
+                    >
+                      <Download size={18} /> Save PNG
+                    </ModalButton>
+                    <ModalButton
+                      onClick={() => navigate('/admin/calendar')}
+                      $variant="outline"
+                      whileHover={{ scale: 1.02 }}
+                      whileTap={{ scale: 0.98 }}
+                    >
+                      <CalendarCheck size={18} /> Calendar
+                    </ModalButton>
+                    <ModalButton
+                      onClick={() => navigate('/admin')}
+                      whileHover={{ scale: 1.02 }}
+                      whileTap={{ scale: 0.98 }}
+                    >
+                      <LayoutDashboard size={18} /> Dashboard
+                    </ModalButton>
+                  </>
+                ) : (
+                  <>
+                    <ModalButton
+                      $variant="outline"
+                      onClick={handleBookAnother}
+                      whileHover={{ scale: 1.02 }}
+                      whileTap={{ scale: 0.98 }}
+                    >
+                      <CalendarPlus size={18} /> Book Another
+                    </ModalButton>
+                    <ModalButton
+                      onClick={handleSaveAsPng}
+                      $variant="outline"
+                      whileHover={{ scale: 1.02 }}
+                      whileTap={{ scale: 0.98 }}
+                      style={{ background: '#f1f8e9', borderColor: '#aed581', color: '#388e3c' }}
+                    >
+                      <Download size={18} /> Save as PNG
+                    </ModalButton>
+                    <ModalButton
+                      onClick={handleGoHome}
+                      whileHover={{ scale: 1.02 }}
+                      whileTap={{ scale: 0.98 }}
+                    >
+                      <Home size={18} /> Go Home
+                    </ModalButton>
+                  </>
+                )}
               </ModalActions>
             </ModalCard>
           </ModalBackdrop>
